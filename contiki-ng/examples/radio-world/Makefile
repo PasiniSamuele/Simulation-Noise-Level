@@ -1,5 +1,0 @@
-CONTIKI_PROJECT = radio-world
-all: $(CONTIKI_PROJECT)
-
-CONTIKI = ../..
-include $(CONTIKI)/Makefile.include
