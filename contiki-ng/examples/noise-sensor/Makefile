@@ -1,4 +1,4 @@
-CONTIKI_PROJECT = radio-world
+CONTIKI_PROJECT = noise-sensor
 all: $(CONTIKI_PROJECT)
 
 CONTIKI = ../..
