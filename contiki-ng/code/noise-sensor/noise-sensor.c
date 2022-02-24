@@ -6,16 +6,14 @@
 #include <stdint.h>
 #include <string.h>
 
-#define READ_NOISE_TIMER 10 * CLOCK_SECOND
-
 #define MAX_WINDOW_SIZE 6
 #define AVG_THRESHOLD_DB 70
+#define PARSE_BUFFER_SIZE 10
 
 static uint16_t noise_values[MAX_WINDOW_SIZE];
+static uint16_t position;
 
-static struct etimer noise_timer;
 static struct etimer mqtt_timer;
-
 
 /*---------------------------------------------------------------------------*/
 /** 
@@ -94,11 +92,8 @@ static uint8_t state;
 #define DEFAULT_AUTH_TOKEN          "AUTHZ"
 #define DEFAULT_SUBSCRIBE_CMD_TYPE  "+"
 #define DEFAULT_BROKER_PORT         1883
-#define DEFAULT_PUBLISH_INTERVAL    (60 * CLOCK_SECOND)
-#define DEFAULT_KEEP_ALIVE_TIMER    60
-
-
-
+#define DEFAULT_PUBLISH_INTERVAL    (10 * CLOCK_SECOND) // Noise Timer
+#define DEFAULT_KEEP_ALIVE_INTERVAL (180 * CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
 PROCESS(noise_sensor_process, "Noise sensor process");
 AUTOSTART_PROCESSES(&noise_sensor_process);
@@ -141,11 +136,9 @@ static char app_buffer[APP_BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
 static struct mqtt_message *msg_ptr = 0;
 static char *buf_ptr;
-static uint16_t seq_nr_value = 0;
 /*---------------------------------------------------------------------------*/
 static mqtt_client_config_t conf;
 /*---------------------------------------------------------------------------*/
-
 
 int
 ipaddr_sprintf(char *buf, uint8_t buf_len, const uip_ipaddr_t *addr)
@@ -274,9 +267,6 @@ update_config()
     return;
   }
 
-  /* Reset the counter */
-  seq_nr_value = 0;
-
   state = STATE_INIT;
 
   /*
@@ -309,45 +299,17 @@ init_config(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
-publish(void)
+publish(char *value)
 {
   /* Publish MQTT topic */
   int len;
-  int remaining = APP_BUFFER_SIZE;
-
-  seq_nr_value++;
 
   buf_ptr = app_buffer;
 
-  len = snprintf(buf_ptr, remaining, "piero"); 
+  len = snprintf(buf_ptr, APP_BUFFER_SIZE, "{noise: %s}", value); 
 
-  if(len < 0 || len >= remaining) {
-    LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
-    return;
-  }
-
-  remaining -= len;
-  buf_ptr += len;
-
-  /* Put our Default route's string representation in a buffer */
-  char def_rt_str[64];
-  memset(def_rt_str, 0, sizeof(def_rt_str));
-  ipaddr_sprintf(def_rt_str, sizeof(def_rt_str), uip_ds6_defrt_choose());
-
-  len = snprintf(buf_ptr, remaining, ",\"Def Route\":\"%s\"",
-                 def_rt_str);
-
-  if(len < 0 || len >= remaining) {
-    LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
-    return;
-  }
-  remaining -= len;
-  buf_ptr += len;
-
-  len = snprintf(buf_ptr, remaining, "}}");
-
-  if(len < 0 || len >= remaining) {
-    LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
+  if(len < 0 || len >= APP_BUFFER_SIZE) {
+    LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", APP_BUFFER_SIZE, len);
     return;
   }
 
@@ -356,13 +318,73 @@ publish(void)
 
   LOG_INFO("Publish sent out!\n");
 }
+
+static void
+publish_avg(double avg) {
+  char avg_string[PARSE_BUFFER_SIZE];
+  snprintf(avg_string, PARSE_BUFFER_SIZE, "\"%.2f\"", avg);
+
+  publish(avg_string);
+}
+
+publish_raw(void) {
+  char double_string[PARSE_BUFFER_SIZE];
+  char final_string[MAX_WINDOW_SIZE * PARSE_BUFFER_SIZE] = "[";  
+
+  for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
+    snprintf(double_string, PARSE_BUFFER_SIZE, "\"%.2f\",", noise_values[i]);
+    strcat(final_string, double_string)
+  }
+  
+  size_t len = strlen(final_string)
+
+  // Replaces last ',' with ']'
+  final_string[len - 1] = ']' 
+
+  publish(final_string);
+}
+
+static void
+publish_noise(void) {
+  double avg = 0;
+  
+  for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
+    avg += noise_values[i];
+  }
+  
+  avg /= MAX_WINDOW_SIZE;
+  
+  if (avg < AVG_THRESHOLD_DB) {
+    publish_avg(avg);
+  } else {
+    publish_raw();
+  }
+}
+
+static void
+noise_processing() {
+  radio_value_t value;
+  radio_result_t rv;
+
+  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
+
+  if (rv == RADIO_RESULT_OK) {
+    noise_values[position] = (uint16_t) value + 110;  
+    printf("Noise lvl: %d dB\n", noise_values[position]);
+    
+    publish_noise();
+    position = (position + 1) % MAX_WINDOW_SIZE;
+  } else {
+    printf("Something went wrong...");
+  }
+}
 /*---------------------------------------------------------------------------*/
 static void
 connect_to_broker(void)
 {
   /* Connect to MQTT server */
   mqtt_connect(&conn, conf.broker_ip, conf.broker_port,
-               conf.pub_interval * 3);
+               DEFAULT_KEEP_ALIVE_INTERVAL);
 
   state = STATE_CONNECTING;
 }
@@ -411,7 +433,7 @@ mqtt_state_machine()
 
     if(mqtt_ready(&conn) && conn.out_buffer_sent) {
       /* Connected; publish */
-      publish();
+      noise_processing();
       etimer_set(&mqtt_timer, conf.pub_interval);
 
       LOG_INFO("Publishing\n");
@@ -476,53 +498,6 @@ mqtt_state_machine()
 }
 
 /*---------------------------------------------------------------------------*/
-
-static void
-send_avg(double avg) {
-  
-}
-
-static void
-send_raw(void) {
-  
-}
-
-static void
-send_noise(void) {
-  double avg = 0;
-  
-  for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
-    avg += noise_values[i];
-  }
-  
-  avg /= MAX_WINDOW_SIZE;
-  
-  if (avg < AVG_THRESHOLD_DB) {
-    send_avg(avg);
-  } else {
-    send_raw();
-  }
-}
-
-static void
-noise_processing(uint16_t position) {
-  radio_value_t value;
-  radio_result_t rv;
-
-  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
-
-  if (rv == RADIO_RESULT_OK) {
-    noise_values[position] = (uint16_t) value + 110;  
-    printf("Noise lvl: %d dB\n", noise_values[position]);
-    
-    send_noise();
-  } else {
-    printf("Something went wrong...");
-  }
-
-  etimer_set(&noise_timer, READ_NOISE_TIMER);
-}
-
 static void
 init_noise_values(void) {
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
@@ -534,8 +509,6 @@ init_noise_values(void) {
 PROCESS_THREAD(noise_sensor_process, ev, data)
 {
   PROCESS_BEGIN();
-  
-  etimer_set(&noise_timer, READ_NOISE_TIMER);
   init_noise_values();
 
   /* Initialize MQTT */
@@ -543,18 +516,11 @@ PROCESS_THREAD(noise_sensor_process, ev, data)
   init_config();
   update_config();
 
-  static uint16_t position = 0;
+  position = 0;
   
   while(1) {
-
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&mqtt_timer));
-
     mqtt_state_machine();
-
-    if (etimer_expired(&noise_timer)) {
-      noise_processing(position);
-      position = (position + 1) % MAX_WINDOW_SIZE;
-    }
   }
 
   printf("Done\n");
