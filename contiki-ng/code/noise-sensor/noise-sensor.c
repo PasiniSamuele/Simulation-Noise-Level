@@ -13,8 +13,11 @@
 #define MAX_WINDOW_SIZE 6
 #define AVG_THRESHOLD_DB 70
 
-
 static uint16_t noise_values[MAX_WINDOW_SIZE];
+
+static struct etimer noise_timer;
+static struct etimer mqtt_timer;
+
 /*---------------------------------------------------------------------------*/
 PROCESS(noise_sensor_process, "Noise sensor process");
 AUTOSTART_PROCESSES(&noise_sensor_process);
@@ -76,9 +79,6 @@ init_noise_values(void) {
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(noise_sensor_process, ev, data)
 {
-  static struct etimer noise_timer;
-  static struct etimer mqtt_timer;
-
   PROCESS_BEGIN();
   
   etimer_set(&noise_timer, READ_NOISE_TIMER);
