@@ -1,32 +1,3 @@
-/*
- * Copyright (c) 2014, Texas Instruments Incorporated - http://www.ti.com/
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the copyright holder nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
- * COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- */
 /*---------------------------------------------------------------------------*/
 /** 
  *
@@ -45,11 +16,9 @@
 #include "net/ipv6/sicslowpan.h"
 #include "sys/etimer.h"
 #include "sys/ctimer.h"
-#include "leds.h"
-#include "random.h"
 
 #include "sys/log.h"
-#define LOG_MODULE "MQTT-DEMO"
+#define LOG_MODULE "MQTT-UTIL"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
 #include <string.h>
@@ -58,21 +27,14 @@
  * Publish to a local MQTT broker (e.g. mosquitto) running on
  * the node that hosts your border router
  */
-static const char *broker_ip = MQTT_DEMO_BROKER_IP_ADDR;
-#define DEFAULT_ORG_ID              "mqtt-demo"
+static const char *broker_ip = MQTT_BROKER_IP_ADDR;
+#define DEFAULT_ORG_ID              "mqtt-util"
 /*---------------------------------------------------------------------------*/
 /*
  * A timeout used when waiting for something to happen (e.g. to connect or to
  * disconnect)
  */
 #define STATE_MACHINE_PERIODIC     (CLOCK_SECOND >> 1)
-/*---------------------------------------------------------------------------*/
-/* Provide visible feedback via LEDS during various states */
-/* When connecting to broker */
-#define CONNECTING_LED_DURATION    (CLOCK_SECOND >> 2)
-
-/* Each time we try to publish */
-#define PUBLISH_LED_ON_DURATION    (CLOCK_SECOND)
 /*---------------------------------------------------------------------------*/
 /* Connections and reconnections */
 #define RETRY_FOREVER              0xFF
@@ -107,7 +69,6 @@ static uint8_t state;
 /*---------------------------------------------------------------------------*/
 /* A timeout used when waiting to connect to a network */
 #define NET_CONNECT_PERIODIC        (CLOCK_SECOND >> 2)
-#define NO_NET_LED_DURATION         (NET_CONNECT_PERIODIC >> 1)
 /*---------------------------------------------------------------------------*/
 /* Default configuration values */
 #define DEFAULT_TYPE_ID             "native"
@@ -116,9 +77,6 @@ static uint8_t state;
 #define DEFAULT_BROKER_PORT         1883
 #define DEFAULT_PUBLISH_INTERVAL    (60 * CLOCK_SECOND)
 #define DEFAULT_KEEP_ALIVE_TIMER    60
-/*---------------------------------------------------------------------------*/
-PROCESS_NAME(mqtt_demo_process);
-AUTOSTART_PROCESSES(&mqtt_demo_process);
 /*---------------------------------------------------------------------------*/
 /**
  * \brief Data structure declaration for the MQTT client configuration
@@ -145,7 +103,6 @@ typedef struct mqtt_client_config {
 #define BUFFER_SIZE 64
 static char client_id[BUFFER_SIZE];
 static char pub_topic[BUFFER_SIZE];
-static char sub_topic[BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
 /*
  * The main MQTT buffers.
@@ -156,15 +113,13 @@ static struct mqtt_connection conn;
 static char app_buffer[APP_BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
 static struct mqtt_message *msg_ptr = 0;
-static struct etimer publish_periodic_timer;
 static struct ctimer ct;
 static char *buf_ptr;
 static uint16_t seq_nr_value = 0;
 /*---------------------------------------------------------------------------*/
 static mqtt_client_config_t conf;
 /*---------------------------------------------------------------------------*/
-PROCESS(mqtt_demo_process, "MQTT Demo");
-/*---------------------------------------------------------------------------*/
+
 int
 ipaddr_sprintf(char *buf, uint8_t buf_len, const uip_ipaddr_t *addr)
 {
@@ -188,12 +143,6 @@ ipaddr_sprintf(char *buf, uint8_t buf_len, const uip_ipaddr_t *addr)
   }
 
   return len;
-}
-/*---------------------------------------------------------------------------*/
-static void
-publish_led_off(void *d)
-{
-  leds_off(MQTT_DEMO_STATUS_LED);
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -241,14 +190,6 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
                 msg_ptr->payload_length);
     break;
   }
-  case MQTT_EVENT_SUBACK: {
-    LOG_INFO("Application is subscribed to topic successfully\n");
-    break;
-  }
-  case MQTT_EVENT_UNSUBACK: {
-    LOG_INFO("Application is unsubscribed to topic successfully\n");
-    break;
-  }
   case MQTT_EVENT_PUBACK: {
     LOG_INFO("Publishing complete\n");
     break;
@@ -262,26 +203,11 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 static int
 construct_pub_topic(void)
 {
-  // int len = snprintf(pub_topic, BUFFER_SIZE, MQTT_DEMO_PUBLISH_TOPIC);
-  int len = snprintf(pub_topic,"%d",random_rand());
+  int len = snprintf(pub_topic, BUFFER_SIZE, MQTT_DEMO_PUBLISH_TOPIC);
 
   /* len < 0: Error. Len >= BUFFER_SIZE: Buffer too small */
   if(len < 0 || len >= BUFFER_SIZE) {
     LOG_ERR("Pub topic: %d, buffer %d\n", len, BUFFER_SIZE);
-    return 0;
-  }
-
-  return 1;
-}
-/*---------------------------------------------------------------------------*/
-static int
-construct_sub_topic(void)
-{
-  int len = snprintf(sub_topic, BUFFER_SIZE, MQTT_DEMO_SUB_TOPIC);
-
-  /* len < 0: Error. Len >= BUFFER_SIZE: Buffer too small */
-  if(len < 0 || len >= BUFFER_SIZE) {
-    LOG_INFO("Sub topic: %d, buffer %d\n", len, BUFFER_SIZE);
     return 0;
   }
 
@@ -307,7 +233,7 @@ construct_client_id(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
-update_config(void)
+update_config(etimer *mqtt_timer)
 {
   if(construct_client_id() == 0) {
     /* Fatal error. Client ID larger than the buffer */
@@ -340,7 +266,7 @@ update_config(void)
    * Since the error at this stage is a config error, we will only exit this
    * error state if we get a new config
    */
-  etimer_set(&publish_periodic_timer, 0);
+  etimer_set(&mqtt_timer, 0);
 
   return;
 }
@@ -359,25 +285,6 @@ init_config()
 
   conf.broker_port = DEFAULT_BROKER_PORT;
   conf.pub_interval = DEFAULT_PUBLISH_INTERVAL;
-}
-/*---------------------------------------------------------------------------*/
-static void
-subscribe(void)
-{
-  mqtt_status_t status;
-
-  status = mqtt_subscribe(&conn, NULL, sub_topic, MQTT_QOS_LEVEL_0);
-
-  LOG_INFO("Subscribing\n");
-  if(status == MQTT_STATUS_OUT_QUEUE_FULL) {
-    LOG_INFO("Tried to subscribe but command queue was full!\n");
-  }
-}
-/*---------------------------------------------------------------------------*/
-static int
-get_onboard_temp(void)
-{
-  return NATIVE_TEMPERATURE;
 }
 /*---------------------------------------------------------------------------*/
 static void
@@ -429,7 +336,7 @@ publish(void)
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
     return;
   }
-  construct_pub_topic();
+
   mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
                strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 
@@ -447,12 +354,12 @@ connect_to_broker(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
-state_machine(void)
+state_machine(etimer *mqtt_timer)
 {
   switch(state) {
   case STATE_INIT:
     /* If we have just been configured register MQTT connection */
-    mqtt_register(&conn, &mqtt_demo_process, client_id, mqtt_event,
+    mqtt_register(&conn, &mqtt_process, client_id, mqtt_event,
                   MAX_TCP_SEGMENT_SIZE);
 
     mqtt_set_username_password(&conn, "use-token-auth",
@@ -470,16 +377,11 @@ state_machine(void)
       /* Registered and with a global IPv6 address, connect! */
       LOG_INFO("Joined network! Connect attempt %u\n", connect_attempt);
       connect_to_broker();
-    } else {
-      leds_on(MQTT_DEMO_STATUS_LED);
-      ctimer_set(&ct, NO_NET_LED_DURATION, publish_led_off, NULL);
     }
-    etimer_set(&publish_periodic_timer, NET_CONNECT_PERIODIC);
+    etimer_set(&mqtt_timer, NET_CONNECT_PERIODIC);
     return;
     break;
   case STATE_CONNECTING:
-    leds_on(MQTT_DEMO_STATUS_LED);
-    ctimer_set(&ct, CONNECTING_LED_DURATION, publish_led_off, NULL);
     /* Not connected yet. Wait */
     LOG_INFO("Connecting: retry %u...\n", connect_attempt);
     break;
@@ -500,11 +402,9 @@ state_machine(void)
         subscribe();
         state = STATE_PUBLISHING;
       } else {
-        leds_on(MQTT_DEMO_STATUS_LED);
-        ctimer_set(&ct, PUBLISH_LED_ON_DURATION, publish_led_off, NULL);
         publish();
       }
-      etimer_set(&publish_periodic_timer, conf.pub_interval);
+      etimer_set(&mqtt_timer, conf.pub_interval);
 
       LOG_INFO("Publishing\n");
       /* Return here so we don't end up rescheduling the timer */
@@ -537,7 +437,7 @@ state_machine(void)
 
       LOG_INFO("Disconnected: attempt %u in %lu ticks\n", connect_attempt, interval);
 
-      etimer_set(&publish_periodic_timer, interval);
+      etimer_set(&mqtt_timer, interval);
 
       state = STATE_REGISTERED;
       return;
@@ -553,7 +453,6 @@ state_machine(void)
     return;
   case STATE_ERROR:
   default:
-    leds_on(MQTT_DEMO_STATUS_LED);
     /*
      * 'default' should never happen
      *
@@ -565,34 +464,5 @@ state_machine(void)
   }
 
   /* If we didn't return so far, reschedule ourselves */
-  etimer_set(&publish_periodic_timer, STATE_MACHINE_PERIODIC);
+  etimer_set(&mqtt_timer, STATE_MACHINE_PERIODIC);
 }
-/*---------------------------------------------------------------------------*/
-PROCESS_THREAD(mqtt_demo_process, ev, data)
-{
-
-  PROCESS_BEGIN();
-
-  LOG_INFO("MQTT Demo Process\n");
-
-  init_config();
-  update_config();
-
-  /* Main loop */
-  while(1) {
-
-    PROCESS_YIELD();
-
-    if (ev == PROCESS_EVENT_TIMER && data == &publish_periodic_timer) {
-      state_machine();
-    }
-
-  }
-
-  PROCESS_END();
-}
-/*---------------------------------------------------------------------------*/
-/**
- * @}
- * @}
- */

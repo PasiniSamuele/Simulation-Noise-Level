@@ -1,16 +1,16 @@
 /*
- * Copyright (c) 2012, Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (c) 2017, George Oikonomou - http://www.spd.gr
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *
  * 3. Neither the name of the copyright holder nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -29,32 +29,8 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*---------------------------------------------------------------------------*/
-/**
- * \file
- * Project specific configuration defines for the MQTT demo
- */
+/* Save some RAM and ROM */
+#define QUEUEBUF_CONF_NUM              4
+#define UIP_CONF_BUFFER_SIZE         140
+#define BORDER_ROUTER_CONF_WEBSERVER   0
 /*---------------------------------------------------------------------------*/
-#ifndef PROJECT_CONF_H_
-#define PROJECT_CONF_H_
-/*---------------------------------------------------------------------------*/
-/* Enable TCP */
-#define UIP_CONF_TCP 1
-/*---------------------------------------------------------------------------*/
-/* User configuration */
-/*---------------------------------------------------------------------------*/
-#define MQTT_DEMO_STATUS_LED  LEDS_GREEN
-#define MQTT_DEMO_TRIGGER_LED LEDS_RED
-#define MQTT_DEMO_PUBLISH_TRIGGER &button_left_sensor
-
-#define MQTT_DEMO_PUBLISH_TOPIC   "iot/native/launchpad/json"
-#define MQTT_DEMO_SUB_TOPIC       "iot/native/launchpad/json"
-
-#define MQTT_DEMO_BROKER_IP_ADDR "fd00::1"
-//*---------------------------------------------------------------------------*/
-#define IEEE802154_CONF_DEFAULT_CHANNEL      21
-//*---------------------------------------------------------------------------*/
-#define NATIVE_TEMPERATURE 25
-//*---------------------------------------------------------------------------*/
-#endif /* PROJECT_CONF_H_ */
-/*---------------------------------------------------------------------------*/
-/** @} */

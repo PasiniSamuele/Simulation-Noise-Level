@@ -6,7 +6,9 @@
 #include <stdint.h>
 #include <string.h>
 
-#define TRIGGER_TIME 3 * CLOCK_SECOND
+#include "mqtt-util.h"
+
+#define READ_NOISE_TIMER 10 * CLOCK_SECOND
 
 #define MAX_WINDOW_SIZE 6
 #define AVG_THRESHOLD_DB 70
@@ -33,6 +35,8 @@ noise_processing(uint16_t position) {
   } else {
     printf("Something went wrong...");
   }
+
+  etimer_set(&noise_timer, READ_NOISE_TIMER);
 }
 
 static void
@@ -73,27 +77,32 @@ init_noise_values(void) {
 /*---------------------------------------------------------------------------*/
 PROCESS_THREAD(noise_sensor_process, ev, data)
 {
-  static struct etimer et;
+  static struct etimer noise_timer;
+  static struct etimer mqtt_timer;
 
   PROCESS_BEGIN();
   
-  etimer_set(&et, TRIGGER_TIME);
+  etimer_set(&noise_timer, READ_NOISE_TIMER);
   init_noise_values();
-  
+
+  /* Initialize MQTT */
+  LOG_INFO("MQTT Noise Process\n");
+  init_config();
+  update_config(&mqtt_timer);
+
   static uint16_t position = 0;
   
-  for(;;) {
-    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
-    
-    noise_processing(position);
-        
-    position++;
-    position = position % MAX_WINDOW_SIZE;
-  
-    etimer_set(&et, TRIGGER_TIME);
+  while(1) {
+
+    PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&mqtt_timer));
+
+    mqtt_state_machine(&mqtt_timer);
+
+    if (etimer_expired(&noise_timer)) {
+      noise_processing(position);
+      position = (position + 1) % MAX_WINDOW_SIZE;
+    }
   }
-
-
 
   printf("Done\n");
 
