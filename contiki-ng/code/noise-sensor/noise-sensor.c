@@ -34,7 +34,6 @@ static struct etimer mqtt_timer;
 #include "net/ipv6/uip.h"
 #include "net/ipv6/sicslowpan.h"
 #include "sys/etimer.h"
-#include "sys/ctimer.h"
 
 #include "sys/log.h"
 #define LOG_MODULE "MQTT-UTIL"
@@ -141,7 +140,6 @@ static struct mqtt_connection conn;
 static char app_buffer[APP_BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
 static struct mqtt_message *msg_ptr = 0;
-static struct ctimer ct;
 static char *buf_ptr;
 static uint16_t seq_nr_value = 0;
 /*---------------------------------------------------------------------------*/
@@ -327,8 +325,7 @@ publish(void)
                  "\"myName\":\"%s\","
                  "\"Seq #\":%d,"
                  "\"Uptime (sec)\":%lu,"
-                 "\"Temp (C)\":%d",
-                 "native", seq_nr_value,clock_seconds(),get_onboard_temp()); 
+                 "native", seq_nr_value,clock_seconds()); 
 
   if(len < 0 || len >= remaining) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
