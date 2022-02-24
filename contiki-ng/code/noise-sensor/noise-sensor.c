@@ -262,7 +262,7 @@ construct_client_id(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
-update_config(struct etimer *mqtt_timer)
+update_config()
 {
   if(construct_client_id() == 0) {
     /* Fatal error. Client ID larger than the buffer */
@@ -377,7 +377,7 @@ connect_to_broker(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
-mqtt_state_machine(struct etimer *mqtt_timer)
+mqtt_state_machine()
 {
   switch(state) {
   case STATE_INIT:
@@ -553,7 +553,7 @@ PROCESS_THREAD(noise_sensor_process, ev, data)
   /* Initialize MQTT */
   LOG_INFO("MQTT Noise Process\n");
   init_config();
-  update_config(&mqtt_timer);
+  update_config();
 
   static uint16_t position = 0;
   
@@ -561,7 +561,7 @@ PROCESS_THREAD(noise_sensor_process, ev, data)
 
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&mqtt_timer));
 
-    mqtt_state_machine(&mqtt_timer);
+    mqtt_state_machine();
 
     if (etimer_expired(&noise_timer)) {
       noise_processing(position);
