@@ -1,4 +1,3 @@
-
 #ifndef MQTT_UTIL_H_   /* Include guard */
 #define MQTT_UTIL_H_
 

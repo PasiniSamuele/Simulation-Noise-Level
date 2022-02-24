@@ -211,7 +211,7 @@ construct_client_id(void)
   return 1;
 }
 /*---------------------------------------------------------------------------*/
-void
+static void
 update_config(struct etimer *mqtt_timer)
 {
   if(construct_client_id() == 0) {
@@ -250,7 +250,7 @@ update_config(struct etimer *mqtt_timer)
   return;
 }
 /*---------------------------------------------------------------------------*/
-void
+static void
 init_config(void)
 {
   /* Populate configuration with default values */
@@ -332,7 +332,7 @@ connect_to_broker(void)
   state = STATE_CONNECTING;
 }
 /*---------------------------------------------------------------------------*/
-void
+static void
 mqtt_state_machine(struct etimer *mqtt_timer)
 {
   switch(state) {
