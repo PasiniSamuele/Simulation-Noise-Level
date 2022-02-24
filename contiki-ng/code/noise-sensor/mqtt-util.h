@@ -1,3 +1,7 @@
+
+#ifndef MQTT_UTIL_H_   /* Include guard */
+#define MQTT_UTIL_H_
+
 /*---------------------------------------------------------------------------*/
 /** 
  *
@@ -123,3 +127,6 @@ static mqtt_client_config_t conf;
 static void init_config(void);
 static void update_config(struct etimer *mqtt_timer);
 static void mqtt_state_machine(struct etimer *mqtt_timer);
+
+
+#endif // MQTT_UTIL_H_
