@@ -400,7 +400,6 @@ mqtt_state_machine()
     LOG_INFO("Connecting: retry %u...\n", connect_attempt);
     break;
   case STATE_CONNECTED:
-  case STATE_PUBLISHING:
     /* If the timer expired, the connection is stable */
     if(timer_expired(&connection_life)) {
       /*
@@ -412,9 +411,7 @@ mqtt_state_machine()
 
     if(mqtt_ready(&conn) && conn.out_buffer_sent) {
       /* Connected; publish */
-      if(state == STATE_PUBLISHING) {
-        publish();
-      }
+      publish();
       etimer_set(&mqtt_timer, conf.pub_interval);
 
       LOG_INFO("Publishing\n");
