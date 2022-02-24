@@ -121,5 +121,5 @@ static mqtt_client_config_t conf;
 /*---------------------------------------------------------------------------*/
 
 static void init_config(void);
-static void update_config(etimer *mqtt_timer);
-static void mqtt_state_machine(etimer *mqtt_timer);
+static void update_config(struct etimer *mqtt_timer);
+static void mqtt_state_machine(struct etimer *mqtt_timer);
