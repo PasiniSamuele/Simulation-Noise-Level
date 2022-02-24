@@ -8,7 +8,7 @@
 
 #define MAX_WINDOW_SIZE 6
 #define AVG_THRESHOLD_DB 70
-#define PARSE_BUFFER_SIZE 10
+#define PARSE_BUFFER_SIZE 15
 
 static uint16_t noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
@@ -92,8 +92,8 @@ static uint8_t state;
 #define DEFAULT_AUTH_TOKEN          "AUTHZ"
 #define DEFAULT_SUBSCRIBE_CMD_TYPE  "+"
 #define DEFAULT_BROKER_PORT         1883
-#define DEFAULT_PUBLISH_INTERVAL    (10 * CLOCK_SECOND) // Noise Timer
-#define DEFAULT_KEEP_ALIVE_INTERVAL (180 * CLOCK_SECOND)
+#define DEFAULT_PUBLISH_INTERVAL    (10 * CLOCK_SECOND)
+#define DEFAULT_KEEP_ALIVE_INTERVAL 180
 /*---------------------------------------------------------------------------*/
 PROCESS(noise_sensor_process, "Noise sensor process");
 AUTOSTART_PROCESSES(&noise_sensor_process);
@@ -327,19 +327,20 @@ publish_avg(double avg) {
   publish(avg_string);
 }
 
+static void
 publish_raw(void) {
   char double_string[PARSE_BUFFER_SIZE];
   char final_string[MAX_WINDOW_SIZE * PARSE_BUFFER_SIZE] = "[";  
 
-  for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
-    snprintf(double_string, PARSE_BUFFER_SIZE, "\"%.2f\",", noise_values[i]);
-    strcat(final_string, double_string)
+  for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {    
+    snprintf(double_string, PARSE_BUFFER_SIZE, "\"%d\",", noise_values[i]);
+    strcat(final_string, double_string);
   }
-  
-  size_t len = strlen(final_string)
+
+  size_t len = strlen(final_string);
 
   // Replaces last ',' with ']'
-  final_string[len - 1] = ']' 
+  final_string[len - 1] = ']';
 
   publish(final_string);
 }
