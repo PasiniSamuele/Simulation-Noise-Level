@@ -319,13 +319,7 @@ publish(void)
 
   buf_ptr = app_buffer;
 
-  len = snprintf(buf_ptr, remaining,
-                 "{"
-                 "\"d\":{"
-                 "\"myName\":\"%s\","
-                 "\"Seq #\":%d,"
-                 "\"Uptime (sec)\":%lu,"
-                 "native", seq_nr_value,clock_seconds()); 
+  len = snprintf(buf_ptr, remaining, "piero"); 
 
   if(len < 0 || len >= remaining) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", remaining, len);
