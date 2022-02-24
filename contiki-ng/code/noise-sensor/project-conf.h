@@ -12,8 +12,7 @@
 /*---------------------------------------------------------------------------*/
 /* User configuration */
 /*---------------------------------------------------------------------------*/
-#define MQTT_PUBLISH_TOPIC   "iot/native/launchpad/json"
-
+#define MQTT_PUBLISH_TOPIC  "iot/native/launchpad/json"
 #define MQTT_BROKER_IP_ADDR "fd00::1"
 //*---------------------------------------------------------------------------*/
 #define IEEE802154_CONF_DEFAULT_CHANNEL      21
