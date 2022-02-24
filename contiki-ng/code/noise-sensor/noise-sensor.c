@@ -270,12 +270,6 @@ update_config(struct etimer *mqtt_timer)
     return;
   }
 
-  if(construct_sub_topic() == 0) {
-    /* Fatal error. Topic larger than the buffer */
-    state = STATE_CONFIG_ERROR;
-    return;
-  }
-
   if(construct_pub_topic() == 0) {
     /* Fatal error. Topic larger than the buffer */
     state = STATE_CONFIG_ERROR;
@@ -427,10 +421,7 @@ mqtt_state_machine(struct etimer *mqtt_timer)
 
     if(mqtt_ready(&conn) && conn.out_buffer_sent) {
       /* Connected; publish */
-      if(state == STATE_CONNECTED) {
-        subscribe();
-        state = STATE_PUBLISHING;
-      } else {
+      if(state == STATE_PUBLISHING) {
         publish();
       }
       etimer_set(&mqtt_timer, conf.pub_interval);
