@@ -202,7 +202,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     LOG_INFO("MQTT Disconnect: reason %u\n", *((mqtt_event_t *)data));
 
     state = STATE_DISCONNECTED;
-    process_poll(&mqtt_demo_process);
+    process_poll(&mqtt_process);
     break;
   }
   case MQTT_EVENT_PUBLISH: {
@@ -232,7 +232,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 static int
 construct_pub_topic(void)
 {
-  int len = snprintf(pub_topic, BUFFER_SIZE, MQTT_DEMO_PUBLISH_TOPIC);
+  int len = snprintf(pub_topic, BUFFER_SIZE, MQTT_PUBLISH_TOPIC);
 
   /* len < 0: Error. Len >= BUFFER_SIZE: Buffer too small */
   if(len < 0 || len >= BUFFER_SIZE) {
