@@ -21,22 +21,13 @@ AUTOSTART_PROCESSES(&noise_sensor_process);
 /*---------------------------------------------------------------------------*/
 
 static void
-noise_processing(uint16_t position) {
-  radio_value_t value;
-  radio_result_t rv;
+send_avg(double avg) {
+  
+}
 
-  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
-
-  if (rv == RADIO_RESULT_OK) {
-    noise_values[position] = (uint16_t) value + 110;  
-    printf("Noise lvl: %d dB\n", noise_values[position]);
-    
-    send_noise();
-  } else {
-    printf("Something went wrong...");
-  }
-
-  etimer_set(&noise_timer, READ_NOISE_TIMER);
+static void
+send_raw(void) {
+  
 }
 
 static void
@@ -56,15 +47,23 @@ send_noise(void) {
   }
 }
 
-
 static void
-send_avg(double avg) {
-  
-}
+noise_processing(uint16_t position) {
+  radio_value_t value;
+  radio_result_t rv;
 
-static void
-send_raw(void) {
-  
+  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
+
+  if (rv == RADIO_RESULT_OK) {
+    noise_values[position] = (uint16_t) value + 110;  
+    printf("Noise lvl: %d dB\n", noise_values[position]);
+    
+    send_noise();
+  } else {
+    printf("Something went wrong...");
+  }
+
+  etimer_set(&noise_timer, READ_NOISE_TIMER);
 }
 
 static void
