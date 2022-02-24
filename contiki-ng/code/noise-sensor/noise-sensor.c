@@ -202,7 +202,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
     LOG_INFO("MQTT Disconnect: reason %u\n", *((mqtt_event_t *)data));
 
     state = STATE_DISCONNECTED;
-    process_poll(&mqtt_process);
+    process_poll(&noise_sensor_process);
     break;
   }
   case MQTT_EVENT_PUBLISH: {
@@ -388,7 +388,7 @@ mqtt_state_machine(struct etimer *mqtt_timer)
   switch(state) {
   case STATE_INIT:
     /* If we have just been configured register MQTT connection */
-    mqtt_register(&conn, &mqtt_process, client_id, mqtt_event,
+    mqtt_register(&conn, &noise_sensor_process, client_id, mqtt_event,
                   MAX_TCP_SEGMENT_SIZE);
 
     mqtt_set_username_password(&conn, "use-token-auth",
