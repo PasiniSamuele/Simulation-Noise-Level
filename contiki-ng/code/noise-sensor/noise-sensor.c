@@ -370,14 +370,15 @@ noise_processing() {
   rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
 
   if (rv == RADIO_RESULT_OK) {
-    noise_values[position] = (uint16_t) value + 110;  
     printf("Noise lvl: %d dB\n", noise_values[position]);
-    
-    publish_noise();
-    position = (position + 1) % MAX_WINDOW_SIZE;
+    noise_values[position] = (uint16_t) value + 110;  
   } else {
-    printf("Something went wrong...");
+    printf("No noise sources in range, noise lvl: 10 dB\n");
+    noise_values[position] = 10;  
   }
+
+  publish_noise();
+  position = (position + 1) % MAX_WINDOW_SIZE;
 }
 /*---------------------------------------------------------------------------*/
 static void
