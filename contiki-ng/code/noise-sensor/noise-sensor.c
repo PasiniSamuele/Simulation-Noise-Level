@@ -9,6 +9,8 @@
 #define MAX_WINDOW_SIZE 6
 #define AVG_THRESHOLD_DB 70
 #define PARSE_BUFFER_SIZE 15
+#define NOISE_CHANNEL 5
+#define RPL_CHANNEL 26
 
 static uint16_t noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
@@ -344,6 +346,8 @@ static void
 publish_noise(void) {
   double avg = 0;
   
+  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
+
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
     avg += noise_values[i];
   }
@@ -362,6 +366,7 @@ noise_processing() {
   radio_value_t value;
   radio_result_t rv;
 
+  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
   rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
 
   if (rv == RADIO_RESULT_OK) {
