@@ -14,10 +14,11 @@
 #define LOG_MODULE "MQTT-UTIL"
 #define LOG_LEVEL LOG_LEVEL_INFO
 
-
 #define MAX_WINDOW_SIZE 6
-#define AVG_THRESHOLD_DB 70
+#define AVG_THRESHOLD_DB 9
 #define PARSE_BUFFER_SIZE 15
+#define NOISE_CHANNEL 5
+#define RPL_CHANNEL 26
 
 static uint16_t noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
@@ -230,17 +231,23 @@ init_config(void)
 static void
 publish(char *value)
 {
-  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value); 
+  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
+
+  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
     return;
   }
 
+  LOG_INFO("Publishing %s\n", pub_buffer);
+
   mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)pub_buffer,
-               strlen(pub_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+               len, MQTT_QOS_LEVEL_1, MQTT_RETAIN_OFF);
 
   LOG_INFO("Publish sent out!\n");
+
+  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
 }
 
 static void
@@ -278,7 +285,7 @@ publish_noise(void) {
   }
   
   avg /= MAX_WINDOW_SIZE;
-  
+
   if (avg < AVG_THRESHOLD_DB) {
     publish_avg(avg);
   } else {
@@ -288,8 +295,15 @@ publish_noise(void) {
 
 static void
 noise_processing() {
+  radio_value_t param_channel;
   radio_value_t value;
   radio_result_t rv;
+
+  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &param_channel);
+
+  if (param_channel == RPL_CHANNEL) {
+    NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
+  }
 
   rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
 
@@ -425,7 +439,7 @@ mqtt_state_machine()
 static void
 init_noise_values(void) {
   position = 0;
-  
+
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
     noise_values[i] = 0;
   }
