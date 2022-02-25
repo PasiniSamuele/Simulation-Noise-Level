@@ -1,10 +1,19 @@
 #include "contiki.h"
-#include "net/netstack.h"
+#include "mqtt.h"
+#include "rpl.h"
 #include "dev/radio.h"
-
+#include "net/netstack.h"
+#include "net/ipv6/uip.h"
+#include "net/ipv6/sicslowpan.h"
+#include "sys/etimer.h"
+#include "sys/log.h"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+
+#define LOG_MODULE "MQTT-UTIL"
+#define LOG_LEVEL LOG_LEVEL_INFO
+
 
 #define MAX_WINDOW_SIZE 6
 #define AVG_THRESHOLD_DB 70
@@ -14,30 +23,6 @@ static uint16_t noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
 
 static struct etimer mqtt_timer;
-
-/*---------------------------------------------------------------------------*/
-/** 
- *
- * Demonstrates MQTT functionality using a local Mosquitto borker. 
- * Published messages include a fake temperature reading.
- * @{
- *
- * \file
- * An MQTT example 
- */
-/*---------------------------------------------------------------------------*/
-#include "contiki.h"
-#include "mqtt.h"
-#include "rpl.h"
-#include "net/ipv6/uip.h"
-#include "net/ipv6/sicslowpan.h"
-#include "sys/etimer.h"
-
-#include "sys/log.h"
-#define LOG_MODULE "MQTT-UTIL"
-#define LOG_LEVEL LOG_LEVEL_INFO
-
-#include <string.h>
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -72,9 +57,8 @@ static uint8_t state;
 #define STATE_REGISTERED      1
 #define STATE_CONNECTING      2
 #define STATE_CONNECTED       3
-#define STATE_PUBLISHING      4
-#define STATE_DISCONNECTED    5
-#define STATE_NEWCONFIG       6
+#define STATE_DISCONNECTED    4
+#define STATE_NEWCONFIG       5
 #define STATE_CONFIG_ERROR 0xFE
 #define STATE_ERROR        0xFF
 /*---------------------------------------------------------------------------*/
@@ -95,9 +79,9 @@ static uint8_t state;
 #define DEFAULT_PUBLISH_INTERVAL    (10 * CLOCK_SECOND)
 #define DEFAULT_KEEP_ALIVE_INTERVAL 180
 /*---------------------------------------------------------------------------*/
+
 PROCESS(noise_sensor_process, "Noise sensor process");
 AUTOSTART_PROCESSES(&noise_sensor_process);
-/*---------------------------------------------------------------------------*/
 
 /*---------------------------------------------------------------------------*/
 /**
@@ -138,46 +122,6 @@ static struct mqtt_message *msg_ptr = 0;
 /*---------------------------------------------------------------------------*/
 static mqtt_client_config_t conf;
 /*---------------------------------------------------------------------------*/
-
-int
-ipaddr_sprintf(char *buf, uint8_t buf_len, const uip_ipaddr_t *addr)
-{
-  uint16_t a;
-  uint8_t len = 0;
-  int i, f;
-  for(i = 0, f = 0; i < sizeof(uip_ipaddr_t); i += 2) {
-    a = (addr->u8[i] << 8) + addr->u8[i + 1];
-    if(a == 0 && f >= 0) {
-      if(f++ == 0) {
-        len += snprintf(&buf[len], buf_len - len, "::");
-      }
-    } else {
-      if(f > 0) {
-        f = -1;
-      } else if(i > 0) {
-        len += snprintf(&buf[len], buf_len - len, ":");
-      }
-      len += snprintf(&buf[len], buf_len - len, "%x", a);
-    }
-  }
-
-  return len;
-}
-/*---------------------------------------------------------------------------*/
-static void
-pub_handler(const char *topic, uint16_t topic_len, const uint8_t *chunk,
-            uint16_t chunk_len)
-{
-  LOG_INFO("Pub handler: topic='%s' (len=%u), chunk_len=%u\n", topic, topic_len,
-      chunk_len);
-
-  /* If the format != json, ignore */
-  if(strncmp(&topic[topic_len - 4], "json", 4) != 0) {
-    LOG_ERR("Incorrect format\n");
-    return;
-  }
-}
-/*---------------------------------------------------------------------------*/
 static void
 mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 {
@@ -193,20 +137,6 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 
     state = STATE_DISCONNECTED;
     process_poll(&noise_sensor_process);
-    break;
-  }
-  case MQTT_EVENT_PUBLISH: {
-    msg_ptr = data;
-
-    if(msg_ptr->first_chunk) {
-      msg_ptr->first_chunk = 0;
-      LOG_INFO("Application received a publish on topic '%s'; payload "
-          "size is %i bytes\n",
-          msg_ptr->topic, msg_ptr->payload_length);
-    }
-
-    pub_handler(msg_ptr->topic, strlen(msg_ptr->topic), msg_ptr->payload_chunk,
-                msg_ptr->payload_length);
     break;
   }
   case MQTT_EVENT_PUBACK: {
@@ -300,8 +230,7 @@ init_config(void)
 static void
 publish(char *value)
 {
-  /* Publish MQTT topic */
-  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{noise: %s}", value); 
+  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value); 
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
@@ -379,7 +308,6 @@ noise_processing() {
 static void
 connect_to_broker(void)
 {
-  /* Connect to MQTT server */
   mqtt_connect(&conn, conf.broker_ip, conf.broker_port,
                DEFAULT_KEEP_ALIVE_INTERVAL);
 
@@ -494,27 +422,23 @@ mqtt_state_machine()
   etimer_set(&mqtt_timer, STATE_MACHINE_PERIODIC);
 }
 
-/*---------------------------------------------------------------------------*/
 static void
 init_noise_values(void) {
+  position = 0;
+  
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
     noise_values[i] = 0;
   }
 }
 
-/*---------------------------------------------------------------------------*/
 PROCESS_THREAD(noise_sensor_process, ev, data)
 {
   PROCESS_BEGIN();
-  init_noise_values();
 
-  /* Initialize MQTT */
-  LOG_INFO("MQTT Noise Process\n");
+  init_noise_values();
   init_config();
   update_config();
 
-  position = 0;
-  
   while(1) {
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&mqtt_timer));
     mqtt_state_machine();
@@ -524,4 +448,3 @@ PROCESS_THREAD(noise_sensor_process, ev, data)
 
   PROCESS_END();
 }
-/*---------------------------------------------------------------------------*/
