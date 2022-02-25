@@ -119,8 +119,6 @@ static char pub_topic[BUFFER_SIZE];
 static struct mqtt_connection conn;
 static char pub_buffer[PUBLISH_BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
-static struct mqtt_message *msg_ptr = 0;
-/*---------------------------------------------------------------------------*/
 static mqtt_client_config_t conf;
 /*---------------------------------------------------------------------------*/
 static void
