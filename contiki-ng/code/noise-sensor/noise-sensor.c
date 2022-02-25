@@ -232,13 +232,13 @@ publish(char *value)
   // DEBUG
   radio_value_t radio_channel;
   NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-  LOG_INFO("Radio channel before: %d", radio_channel);
+  LOG_INFO("Radio channel before: %d\n", radio_channel);
   
   NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
 
   // DEBUG
   NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-  LOG_INFO("Radio channel after: %d", radio_channel);
+  LOG_INFO("Radio channel after: %d\n", radio_channel);
 
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value);
 
@@ -256,13 +256,13 @@ publish(char *value)
 
   // DEBUG
   NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-  LOG_INFO("Radio channel before: %d", radio_channel);
+  LOG_INFO("Radio channel before: %d\n", radio_channel);
 
   NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
 
   // DEBUG
   NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-  LOG_INFO("Radio channel after: %d", radio_channel);
+  LOG_INFO("Radio channel after: %d\n", radio_channel);
 }
 
 static void
@@ -315,16 +315,16 @@ noise_processing() {
   radio_result_t rv;
 
   if (NETSTACK_RADIO.get_value(RADIO_PARAM_POWER_MODE, &radio_channel) == RADIO_RESULT_OK) {
-    LOG_INFO("Query OK");
+    LOG_INFO("Query OK\n");
 
     if (radio_channel == RADIO_POWER_MODE_ON) {
-      LOG_INFO(" RADIO POWER ON");
+      LOG_INFO(" RADIO POWER ON\n");
     } else {
-      LOG_INFO(" RADIO POWER OFF");
+      LOG_INFO(" RADIO POWER OFF\n");
     }
 
   } else {
-    LOG_INFO("Query NOT OK");
+    LOG_INFO("Query NOT OK\n");
   }
 
   if (NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel) != RADIO_RESULT_OK) {
@@ -335,14 +335,14 @@ noise_processing() {
   if (radio_channel == RPL_CHANNEL) {
     // DEBUG
     NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-    LOG_INFO("Radio channel before: %d", radio_channel);
+    LOG_INFO("Radio channel before: %d\n", radio_channel);
 
 
     NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, radio_channel);
     
     // DEBUG
     NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-    LOG_INFO("Radio channel after: %d", radio_channel);
+    LOG_INFO("Radio channel after: %d\n", radio_channel);
   }
 
   rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
