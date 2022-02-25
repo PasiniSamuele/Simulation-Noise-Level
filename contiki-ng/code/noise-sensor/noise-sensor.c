@@ -367,7 +367,7 @@ noise_processing() {
   radio_result_t rv;
 
   NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
-  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
+  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_RSSI, &value);
 
   if (rv == RADIO_RESULT_OK) {
     printf("Noise lvl: %d dB\n", noise_values[position]);
