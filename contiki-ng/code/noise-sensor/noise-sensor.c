@@ -315,7 +315,7 @@ noise_processing() {
   radio_result_t rv;
 
   rv = NETSTACK_RADIO.get_value(RADIO_PARAM_POWER_MODE, &radio_channel);
-  printf("Result query RADIO POWER: %d\n", rv)
+  printf("Result query RADIO POWER: %d\n", rv);
 
   if (rv == RADIO_RESULT_OK) {
     LOG_INFO("Query OK\n");
