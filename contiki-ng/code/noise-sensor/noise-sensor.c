@@ -229,7 +229,16 @@ init_config(void)
 static void
 publish(char *value)
 {
+  // DEBUG
+  radio_value_t radio_channel;
+  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
+  LOG_INFO("Radio channel before: %d", radio_channel);
+  
   NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
+
+  // DEBUG
+  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
+  LOG_INFO("Radio channel after: %d", radio_channel);
 
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value);
 
@@ -245,7 +254,15 @@ publish(char *value)
 
   LOG_INFO("Publish sent out!\n");
 
+  // DEBUG
+  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
+  LOG_INFO("Radio channel before: %d", radio_channel);
+
   NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
+
+  // DEBUG
+  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
+  LOG_INFO("Radio channel after: %d", radio_channel);
 }
 
 static void
@@ -293,14 +310,26 @@ publish_noise(void) {
 
 static void
 noise_processing() {
-  radio_value_t param_channel;
+  radio_value_t radio_channel;
   radio_value_t value;
   radio_result_t rv;
 
-  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &param_channel);
+  if (NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel) != RADIO_RESULT_OK) {
+    LOG_ERR("Bad reading of RADIO_PARAM_CHANNEL. Retrying in %d\n", DEFAULT_PUBLISH_INTERVAL);
+    return;
+  }
 
-  if (param_channel == RPL_CHANNEL) {
-    NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
+  if (radio_channel == RPL_CHANNEL) {
+    // DEBUG
+    NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
+    LOG_INFO("Radio channel before: %d", radio_channel);
+
+
+    NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, &radio_channel);
+    
+    // DEBUG
+    NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
+    LOG_INFO("Radio channel after: %d", radio_channel);
   }
 
   rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
