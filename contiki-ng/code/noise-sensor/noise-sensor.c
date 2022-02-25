@@ -130,9 +130,9 @@ static char pub_topic[BUFFER_SIZE];
  * The main MQTT buffers.
  * We will need to increase if we start publishing more data.
  */
-#define APP_BUFFER_SIZE 512
+#define PUBLISH_BUFFER_SIZE 512
 static struct mqtt_connection conn;
-static char app_buffer[APP_BUFFER_SIZE];
+static char pub_buffer[PUBLISH_BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
 static struct mqtt_message *msg_ptr = 0;
 static char *buf_ptr;
@@ -302,19 +302,15 @@ static void
 publish(char *value)
 {
   /* Publish MQTT topic */
-  int len;
+  int len = snprintf(buf_ptr, PUBLISH_BUFFER_SIZE, "{noise: %s}", value); 
 
-  buf_ptr = app_buffer;
-
-  len = snprintf(buf_ptr, APP_BUFFER_SIZE, "{noise: %s}", value); 
-
-  if(len < 0 || len >= APP_BUFFER_SIZE) {
-    LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", APP_BUFFER_SIZE, len);
+  if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
+    LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
     return;
   }
 
-  mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)app_buffer,
-               strlen(app_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+  mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)pub_buffer,
+               strlen(pub_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 
   LOG_INFO("Publish sent out!\n");
 }
@@ -435,10 +431,10 @@ mqtt_state_machine()
 
     if(mqtt_ready(&conn) && conn.out_buffer_sent) {
       /* Connected; publish */
+      LOG_INFO("Publishing\n");
+
       noise_processing();
       etimer_set(&mqtt_timer, conf.pub_interval);
-
-      LOG_INFO("Publishing\n");
       /* Return here so we don't end up rescheduling the timer */
       return;
     } else {
