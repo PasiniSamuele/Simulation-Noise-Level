@@ -325,7 +325,7 @@ noise_processing() {
     LOG_INFO("Radio channel before: %d", radio_channel);
 
 
-    NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, &radio_channel);
+    NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, radio_channel);
     
     // DEBUG
     NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
