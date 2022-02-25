@@ -367,10 +367,13 @@ publish_noise(void) {
 
 static void
 noise_processing() {
+  radio_param_e param_channel;
   radio_value_t value;
   radio_result_t rv;
 
-  if (NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL) == RPL_CHANNEL) {
+  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &param_channel);
+  
+  if (param_channel == RPL_CHANNEL) {
     NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
   }
 
