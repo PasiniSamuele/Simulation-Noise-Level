@@ -135,7 +135,6 @@ static struct mqtt_connection conn;
 static char pub_buffer[PUBLISH_BUFFER_SIZE];
 /*---------------------------------------------------------------------------*/
 static struct mqtt_message *msg_ptr = 0;
-static char *buf_ptr;
 /*---------------------------------------------------------------------------*/
 static mqtt_client_config_t conf;
 /*---------------------------------------------------------------------------*/
@@ -302,7 +301,7 @@ static void
 publish(char *value)
 {
   /* Publish MQTT topic */
-  int len = snprintf(buf_ptr, PUBLISH_BUFFER_SIZE, "{noise: %s}", value); 
+  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{noise: %s}", value); 
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
