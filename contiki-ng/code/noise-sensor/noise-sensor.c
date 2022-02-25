@@ -314,6 +314,19 @@ noise_processing() {
   radio_value_t value;
   radio_result_t rv;
 
+  if (NETSTACK_RADIO.get_value(RADIO_PARAM_POWER_MODE, &radio_channel) == RADIO_RESULT_OK) {
+    LOG_INFO("Query OK");
+
+    if (radio_channel == RADIO_POWER_MODE_ON) {
+      LOG_INFO(" RADIO POWER ON");
+    } else {
+      LOG_INFO(" RADIO POWER OFF");
+    }
+
+  } else {
+    LOG_INFO("Query NOT OK");
+  }
+
   if (NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel) != RADIO_RESULT_OK) {
     LOG_ERR("Bad reading of RADIO_PARAM_CHANNEL. Retrying in %d\n", DEFAULT_PUBLISH_INTERVAL);
     return;
