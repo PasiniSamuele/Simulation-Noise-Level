@@ -302,6 +302,8 @@ init_config(void)
 static void
 publish(char *value)
 {
+  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
+
   /* Publish MQTT topic */
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{noise: %s}", value); 
 
@@ -314,6 +316,8 @@ publish(char *value)
                strlen(pub_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
 
   LOG_INFO("Publish sent out!\n");
+
+  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
 }
 
 static void
@@ -346,14 +350,12 @@ static void
 publish_noise(void) {
   double avg = 0;
   
-  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
-
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
     avg += noise_values[i];
   }
   
   avg /= MAX_WINDOW_SIZE;
-  
+
   if (avg < AVG_THRESHOLD_DB) {
     publish_avg(avg);
   } else {
@@ -366,8 +368,11 @@ noise_processing() {
   radio_value_t value;
   radio_result_t rv;
 
-  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
-  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_LAST_RSSI, &value);
+  if (NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL) == RPL_CHANNEL) {
+    NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
+  }
+
+  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
 
   if (rv == RADIO_RESULT_OK) {
     printf("Noise lvl: %d dB\n", noise_values[position]);
