@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define MAX_WINDOW_SIZE 6
-#define AVG_THRESHOLD_DB 70
+#define AVG_THRESHOLD_DB 9
 #define PARSE_BUFFER_SIZE 15
 
 static uint16_t noise_values[MAX_WINDOW_SIZE];
@@ -301,15 +301,17 @@ static void
 publish(char *value)
 {
   /* Publish MQTT topic */
-  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{noise: %s}", value); 
+  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{noise:%s}", value); 
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
     return;
   }
 
+  LOG_INFO("Publishing %s\n", pub_buffer);
+
   mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)pub_buffer,
-               strlen(pub_buffer), MQTT_QOS_LEVEL_0, MQTT_RETAIN_OFF);
+               len, MQTT_QOS_LEVEL_1, MQTT_RETAIN_OFF);
 
   LOG_INFO("Publish sent out!\n");
 }
