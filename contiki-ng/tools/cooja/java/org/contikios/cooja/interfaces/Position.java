@@ -55,4 +55,11 @@ public abstract class Position extends MoteInterface {
 
   public abstract double getDistanceTo(Mote m);
 
+  public abstract JPanel getInterfaceVisualizer();
+
+  public abstract void releaseInterfaceVisualizer(JPanel panel);
+
+  public abstract Collection<Element> getConfigXML();
+
+
 }
