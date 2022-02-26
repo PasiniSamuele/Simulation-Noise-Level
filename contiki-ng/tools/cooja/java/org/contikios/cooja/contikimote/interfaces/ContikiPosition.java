@@ -35,7 +35,6 @@ import javax.swing.*;
 import org.apache.log4j.Logger;
 import org.contikios.cooja.contikimote.ContikiMote;
 import org.jdom.Element;
-import java.text.NumberFormat;
 
 
 import org.contikios.cooja.*;
@@ -75,8 +74,14 @@ public class ContikiPosition extends MoteInterface implements ContikiMoteInterfa
     
     memory = new VarMemory(mote.getMemory());
 
-    MoteInterfaceHandler h = mote.getInterfaces();
-    Position p = h.getPosition();
+    Collection<MoteInterface> collection = mote.getInterfaces().getInterfaces();
+
+    for (MoteInterface c : collection) {
+      logger.info(c.getClass().getName());
+    }
+
+
+    //Position p = h.getPosition();
 
 
     //mote.getInterfaces().getPosition().addObserver(this);
