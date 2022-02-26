@@ -228,8 +228,7 @@ init_config(void)
 static void
 publish(char *value)
 {
-
-  //NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
+  radio_set_channel(RPL_CHANNEL);
 
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value);
 
@@ -245,7 +244,7 @@ publish(char *value)
 
   LOG_INFO("Publish sent out!\n");
 
-  //NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
+  radio_set_channel(NOISE_CHANNEL);
 }
 
 static void
@@ -293,24 +292,12 @@ publish_noise(void) {
 
 static void
 noise_processing() {
-  int rssi_value = radio_signal_strength_last();
+  radio_set_channel(NOISE_CHANNEL);
 
-  //rv = NETSTACK_RADIO.get_value(RADIO_PARAM_POWER_MODE, &radio_channel);
-  //printf("Result query RADIO POWER: %d\n", rv);
-  /*
-  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
-
-  if (rv == RADIO_RESULT_OK) {
-    printf("Noise lvl: %d dB\n", noise_values[position]);
-    noise_values[position] = (uint16_t) value + 110;  
-  } else {
-    printf("No noise sources in range, noise lvl: 10 dB\n");
-    noise_values[position] = 10;  
-  }*/
+  int rssi_value = radio_signal_strength_current();
 
   noise_values[position] = rssi_value + 110;
   printf("Noise lvl: %d dB\n", noise_values[position]);
-
 
   publish_noise();
   position = (position + 1) % MAX_WINDOW_SIZE;
