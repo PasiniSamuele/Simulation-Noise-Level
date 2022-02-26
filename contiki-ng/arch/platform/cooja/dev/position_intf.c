@@ -28,7 +28,7 @@
  *
  */
 
-#include "position_intf.h"
+#include "dev/position_intf.h"
 #include "lib/simEnvChange.h"
 
 #include <stdio.h>
