@@ -38,7 +38,8 @@
  */
 
 #include "contiki.h"
-#include "dev/position_intf.h"
+//#include "dev/position_intf.h"
+#include "dev/moteid.h"
 
 #include <stdio.h> /* For printf() */
 /*---------------------------------------------------------------------------*/
@@ -56,7 +57,7 @@ PROCESS_THREAD(hello_world_process, ev, data)
 
   while(1) {
     //printf("X: %f\n", X);
-    printf("mario: %d\n", mario);
+    printf("simMoteID: %d\n", simMoteID);
 
     /* Wait for the periodic timer to expire and then restart the timer. */
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&timer));
