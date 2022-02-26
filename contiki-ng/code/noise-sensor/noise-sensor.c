@@ -59,6 +59,7 @@ static uint8_t state;
 #define STATE_CONNECTED       3
 #define STATE_DISCONNECTED    4
 #define STATE_NEWCONFIG       5
+#define STATE_SAMPLING        6
 #define STATE_CONFIG_ERROR 0xFE
 #define STATE_ERROR        0xFF
 /*---------------------------------------------------------------------------*/
@@ -288,16 +289,10 @@ publish_noise(void) {
 
 static void
 noise_processing() {
-  radio_set_channel(NOISE_CHANNEL);
-  
-  struct etimer sleep_timer;
-  etimer_set(&sleep_timer, 0.1 * CLOCK_SECOND);
-  PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&sleep_timer));
-
   int rssi_value = radio_signal_strength_last();
-
+  
   radio_set_channel(RPL_CHANNEL);
-
+  
   noise_values[position] = rssi_value + 110;
   printf("Noise lvl: %d dB\n", noise_values[position]);
 
@@ -357,11 +352,12 @@ mqtt_state_machine()
     }
 
     if(mqtt_ready(&conn) && conn.out_buffer_sent) {
-      /* Connected; publish */
-      LOG_INFO("Publishing\n");
+      /* Connected; sampling */
+      LOG_INFO("Noise sampling started\n");
 
-      noise_processing();
-      etimer_set(&mqtt_timer, conf.pub_interval);
+      radio_set_channel(NOISE_CHANNEL);
+      state = STATE_SAMPLING;
+      etimer_set(&mqtt_timer, 0.1 * CLOCK_SECOND);
       /* Return here so we don't end up rescheduling the timer */
       return;
     } else {
@@ -378,6 +374,10 @@ mqtt_state_machine()
           conn.out_queue_full);
     }
     break;
+  case STATE_SAMPLING:
+    noise_processing()
+    etimer_set(&mqtt_timer, conf.pub_interval);
+    return;
   case STATE_DISCONNECTED:
     LOG_INFO("Disconnected\n");
     if(connect_attempt < RECONNECT_ATTEMPTS ||
