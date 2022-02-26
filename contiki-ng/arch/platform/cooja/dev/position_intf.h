@@ -36,6 +36,7 @@
 extern double X;
 extern double Y;
 extern double Z;
+int mario = 5;
 
 
 #endif /* POSITION_INTF_H_ */
