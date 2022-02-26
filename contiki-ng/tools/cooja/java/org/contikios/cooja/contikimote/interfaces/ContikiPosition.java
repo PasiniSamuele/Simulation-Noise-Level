@@ -28,6 +28,8 @@
  *
  */
 
+package org.contikios.cooja.contikimote.interfaces;
+
 import java.util.*;
 import javax.swing.*;
 import org.apache.log4j.Logger;
@@ -36,6 +38,9 @@ import org.jdom.Element;
 import org.contikios.cooja.*;
 import org.contikios.cooja.contikimote.ContikiMoteInterface;
 import org.contikios.cooja.mote.memory.VarMemory;
+
+import org.contikios.cooja.interfaces.Position;
+
 
 /**
  * An example of how to implement new mote interfaces.
