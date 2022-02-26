@@ -31,12 +31,10 @@
 #ifndef POSITION_INTF_H_
 #define POSITION_INTF_H_
 
-// Interface needs to include something?
-
 extern double X;
 extern double Y;
 extern double Z;
-int mario = 5;
+extern int mario = 5;
 
 
 #endif /* POSITION_INTF_H_ */
