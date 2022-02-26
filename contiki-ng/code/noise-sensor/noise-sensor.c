@@ -1,8 +1,7 @@
 #include "contiki.h"
 #include "mqtt.h"
 #include "rpl.h"
-#include "dev/radio.h"
-#include "net/netstack.h"
+#include "dev/cooja-radio.h"
 #include "net/ipv6/uip.h"
 #include "net/ipv6/sicslowpan.h"
 #include "sys/etimer.h"
@@ -229,16 +228,8 @@ init_config(void)
 static void
 publish(char *value)
 {
-  // DEBUG
-  radio_value_t radio_channel;
-  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-  LOG_INFO("Radio channel before: %d\n", radio_channel);
-  
-  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
 
-  // DEBUG
-  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-  LOG_INFO("Radio channel after: %d\n", radio_channel);
+  //NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, RPL_CHANNEL);
 
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value);
 
@@ -254,15 +245,7 @@ publish(char *value)
 
   LOG_INFO("Publish sent out!\n");
 
-  // DEBUG
-  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-  LOG_INFO("Radio channel before: %d\n", radio_channel);
-
-  NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
-
-  // DEBUG
-  NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-  LOG_INFO("Radio channel after: %d\n", radio_channel);
+  //NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, NOISE_CHANNEL);
 }
 
 static void
@@ -310,44 +293,11 @@ publish_noise(void) {
 
 static void
 noise_processing() {
-  radio_value_t radio_channel;
-  radio_value_t value;
-  radio_result_t rv;
+  int rssi_value = radio_signal_strength_current();
 
-  rv = NETSTACK_RADIO.get_value(RADIO_PARAM_POWER_MODE, &radio_channel);
-  printf("Result query RADIO POWER: %d\n", rv);
-
-  if (rv == RADIO_RESULT_OK) {
-    LOG_INFO("Query OK\n");
-
-    if (radio_channel == RADIO_POWER_MODE_ON) {
-      LOG_INFO(" RADIO POWER ON\n");
-    } else {
-      LOG_INFO(" RADIO POWER OFF\n");
-    }
-
-  } else {
-    LOG_INFO("Query NOT OK\n");
-  }
-
-  if (NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel) != RADIO_RESULT_OK) {
-    LOG_ERR("Bad reading of RADIO_PARAM_CHANNEL. Retrying in %d\n", DEFAULT_PUBLISH_INTERVAL);
-    return;
-  }
-
-  if (radio_channel == RPL_CHANNEL) {
-    // DEBUG
-    NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-    LOG_INFO("Radio channel before: %d\n", radio_channel);
-
-
-    NETSTACK_RADIO.set_value(RADIO_PARAM_CHANNEL, radio_channel);
-    
-    // DEBUG
-    NETSTACK_RADIO.get_value(RADIO_PARAM_CHANNEL, &radio_channel);
-    LOG_INFO("Radio channel after: %d\n", radio_channel);
-  }
-
+  //rv = NETSTACK_RADIO.get_value(RADIO_PARAM_POWER_MODE, &radio_channel);
+  //printf("Result query RADIO POWER: %d\n", rv);
+  /*
   rv = NETSTACK_RADIO.get_value(RADIO_PARAM_RSSI, &value);
 
   if (rv == RADIO_RESULT_OK) {
@@ -356,7 +306,11 @@ noise_processing() {
   } else {
     printf("No noise sources in range, noise lvl: 10 dB\n");
     noise_values[position] = 10;  
-  }
+  }*/
+
+  noise_values[position] = rssi_value + 110;
+  printf("Noise lvl: %d dB\n", noise_values[position]);
+
 
   publish_noise();
   position = (position + 1) % MAX_WINDOW_SIZE;
