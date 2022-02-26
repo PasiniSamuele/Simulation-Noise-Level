@@ -74,13 +74,7 @@ public class ContikiPosition extends MoteInterface implements ContikiMoteInterfa
     
     memory = new VarMemory(mote.getMemory());
 
-    MoteInterfaceHandler moteInterfaceHandler = this.mote.getInterfaces();
-
-    logger.info(moteInterfaceHandler.toString());
-
-    //Position p = h.getPosition();
-
-    //mote.getInterfaces().getPosition().addObserver(this);
+    //this.mote.getInterfaces().getPosition().addObserver(this);
   }
 
   @Override
