@@ -185,8 +185,8 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   Mote cursorMote;
 
   MotesActionState mouseActionState = MotesActionState.NONE;
-  /* Position where mouse button was pressed */
-  Position pressedPos;
+  /* ContikiPosition where mouse button was pressed */
+  ContikiPosition pressedPos;
 
   private Set<Mote> movedMotes = null;
   private long moveStartTime = -1;
@@ -395,7 +395,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     simulation.getEventCentral().addMoteCountListener(newMotesListener = new MoteCountListener() {
       @Override
       public void moteWasAdded(Mote mote) {
-        Position pos = mote.getInterfaces().getPosition();
+        ContikiPosition pos = mote.getInterfaces().getPosition();
         if (pos != null) {
           pos.addObserver(posObserver);
           SwingUtilities.invokeLater(new Runnable() {
@@ -410,7 +410,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
       @Override
       public void moteWasRemoved(Mote mote) {
-        Position pos = mote.getInterfaces().getPosition();
+        ContikiPosition pos = mote.getInterfaces().getPosition();
         if (pos != null) {
           pos.deleteObserver(posObserver);
           repaint();
@@ -418,7 +418,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
       }
     });
     for (Mote mote : simulation.getMotes()) {
-      Position pos = mote.getInterfaces().getPosition();
+      ContikiPosition pos = mote.getInterfaces().getPosition();
       if (pos != null) {
         pos.addObserver(posObserver);
       }
@@ -1015,7 +1015,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   Map<Mote, double[]> moveStartPositions = new HashMap<>();
 
   private void handleMouseDrag(MouseEvent e, boolean stop) {
-    Position currPos = transformPixelToPosition(e.getPoint());
+    ContikiPosition currPos = transformPixelToPosition(e.getPoint());
 
     switch (mouseActionState) {
       case DEFAULT_PRESS:
@@ -1027,7 +1027,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
           mouseActionState = MotesActionState.MOVING;
           // save start position
           for (Mote m : selectedMotes) {
-            Position pos = m.getInterfaces().getPosition();
+            ContikiPosition pos = m.getInterfaces().getPosition();
             moveStartPositions.put(m, new double[]{
               pos.getXCoordinate(),
               pos.getYCoordinate(),
@@ -1139,7 +1139,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     }
     /* Save start positions and set move-start position to clicked mote */
     for (Mote m : selectedMotes) {
-      Position pos = m.getInterfaces().getPosition();
+      ContikiPosition pos = m.getInterfaces().getPosition();
       moveStartPositions.put(m, new double[]{
         pos.getXCoordinate(),
         pos.getYCoordinate(),
@@ -1162,12 +1162,12 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   }
 
   private void zoomToFactor(double newZoom, Point zoomCenter) {
-    Position center = transformPixelToPosition(zoomCenter);
+    ContikiPosition center = transformPixelToPosition(zoomCenter);
     viewportTransform.setToScale(
             newZoom,
             newZoom
     );
-    Position newCenter = transformPixelToPosition(zoomCenter);
+    ContikiPosition newCenter = transformPixelToPosition(zoomCenter);
     viewportTransform.translate(
             newCenter.getXCoordinate() - center.getXCoordinate(),
             newCenter.getYCoordinate() - center.getYCoordinate()
@@ -1187,7 +1187,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   public Mote[] findMotesInRange(int startX, int startY, int width, int height) {
     List<Mote> motes = new LinkedList<>();
     for (Mote m : simulation.getMotes()) {
-      Position pos = m.getInterfaces().getPosition();
+      ContikiPosition pos = m.getInterfaces().getPosition();
       int moteX = transformToPixelX(pos.getXCoordinate());
       int moteY = transformToPixelY(pos.getYCoordinate());
       if (moteX > startX && moteX < startX + width
@@ -1225,7 +1225,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
             - transformToPositionY(0);
 
     for (int i = 0; i < simulation.getMotesCount(); i++) {
-      Position pos = simulation.getMote(i).getInterfaces().getPosition();
+      ContikiPosition pos = simulation.getMote(i).getInterfaces().getPosition();
 
       // Transform to unit circle before checking if mouse hit this mote
       double distanceX = Math.abs(xCoord - pos.getXCoordinate())
@@ -1252,8 +1252,8 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     if (showMoteToMoteRelations) {
       MoteRelation[] relations = simulation.getCooja().getMoteRelations();
       for (MoteRelation r : relations) {
-        Position sourcePos = r.source.getInterfaces().getPosition();
-        Position destPos = r.dest.getInterfaces().getPosition();
+        ContikiPosition sourcePos = r.source.getInterfaces().getPosition();
+        ContikiPosition destPos = r.dest.getInterfaces().getPosition();
 
         Point sourcePoint = transformPositionToPixel(sourcePos);
         Point destPoint = transformPositionToPixel(destPos);
@@ -1277,7 +1277,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
         moteColors = DEFAULT_MOTE_COLORS;
       }
 
-      Position motePos = mote.getInterfaces().getPosition();
+      ContikiPosition motePos = mote.getInterfaces().getPosition();
 
       Point pixelCoord = transformPositionToPixel(motePos);
       int x = pixelCoord.x;
@@ -1375,14 +1375,14 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     /* Init values */
     {
-      Position pos = motes[0].getInterfaces().getPosition();
+      ContikiPosition pos = motes[0].getInterfaces().getPosition();
       smallX = bigX = pos.getXCoordinate();
       smallY = bigY = pos.getYCoordinate();
     }
 
     /* Extremes */
     for (Mote mote : motes) {
-      Position pos = mote.getInterfaces().getPosition();
+      ContikiPosition pos = mote.getInterfaces().getPosition();
       smallX = Math.min(smallX, pos.getXCoordinate());
       bigX = Math.max(bigX, pos.getXCoordinate());
       smallY = Math.min(smallY, pos.getYCoordinate());
@@ -1415,7 +1415,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        Position viewMid
+        ContikiPosition viewMid
                 = transformPixelToPosition(canvas.getWidth() / 2, canvas.getHeight() / 2);
         double motesMidX = (smallXfinal + bigXfinal) / 2.0;
         double motesMidY = (smallYfinal + bigYfinal) / 2.0;
@@ -1436,7 +1436,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
    * Real-world position
    * @return Pixel coordinates
    */
-  public Point transformPositionToPixel(Position pos) {
+  public Point transformPositionToPixel(ContikiPosition pos) {
     return transformPositionToPixel(
             pos.getXCoordinate(),
             pos.getYCoordinate(),
@@ -1471,12 +1471,12 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
    * On-screen pixel coordinate
    * @return Real world coordinate (z=0).
    */
-  public Position transformPixelToPosition(Point pixelPos) {
+  public ContikiPosition transformPixelToPosition(Point pixelPos) {
     return transformPixelToPosition(pixelPos.x, pixelPos.y);
   }
 
-  public Position transformPixelToPosition(int x, int y) {
-    Position position = new ContikiPosition(null);
+  public ContikiPosition transformPixelToPosition(int x, int y) {
+    ContikiPosition position = new ContikiPosition(null);
     position.setCoordinates(
             transformToPositionX(x),
             transformToPositionY(y),
@@ -1516,7 +1516,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     simulation.getEventCentral().removeMoteCountListener(newMotesListener);
     for (Mote mote : simulation.getMotes()) {
-      Position pos = mote.getInterfaces().getPosition();
+      ContikiPosition pos = mote.getInterfaces().getPosition();
       if (pos != null) {
         pos.deleteObserver(posObserver);
       }
