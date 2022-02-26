@@ -84,7 +84,7 @@ public class Position extends MoteInterface {
     this.setChanged();
     this.notifyObservers(mote);
 
-    VarMemory memory = (VarMemory) mote.getMemory();
+    VarMemory memory =  new VarMemory(mote.getMemory());
 
     memory.setIntValueOf("coordX", (int) (coords[0] * 100));
     memory.setIntValueOf("coordY", (int) (coords[1] * 100));
