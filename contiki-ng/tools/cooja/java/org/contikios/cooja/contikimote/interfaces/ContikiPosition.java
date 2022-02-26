@@ -63,7 +63,7 @@ import org.contikios.cooja.interfaces.Position;
  * @author Fredrik Osterlind
  */
 @ClassDescription("Position Interface")
-public class ContikiPosition extends MoteInterface implements ContikiMoteInterface, Observer {
+public class ContikiPosition extends MoteInterface implements ContikiMoteInterface, Observer,  {
   private static Logger logger = Logger.getLogger(ContikiPosition.class);
 
   private ContikiMote mote;
@@ -76,20 +76,18 @@ public class ContikiPosition extends MoteInterface implements ContikiMoteInterfa
 
     logger.info(this.mote.getInterfaces());
 
-    //this.mote.getInterfaces().getPosition().addObserver(this);
+    mote.addObserver(this);
   }
 
   @Override
-  public void update(Observable obs, Object obj) { 
+  public void update(Observable obs, Object obj) {
     mote = (ContikiMote) obj;
-    
+
     Position pos = mote.getInterfaces().getPosition();
 
     memory.setIntValueOf("coordX", (int) (pos.getXCoordinate() * 100));
     memory.setIntValueOf("coordY", (int) (pos.getYCoordinate() * 100));
     memory.setIntValueOf("coordZ", (int) (pos.getZCoordinate() * 100));
-
-    logger.info(String.valueOf(pos.getXCoordinate()));
 
     memory.setByteValueOf("positionChanged", (byte) 1);
   }
