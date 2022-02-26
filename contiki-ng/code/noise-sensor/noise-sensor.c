@@ -228,8 +228,6 @@ init_config(void)
 static void
 publish(char *value)
 {
-  radio_set_channel(RPL_CHANNEL);
-
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
@@ -243,8 +241,6 @@ publish(char *value)
                len, MQTT_QOS_LEVEL_1, MQTT_RETAIN_OFF);
 
   LOG_INFO("Publish sent out!\n");
-
-  radio_set_channel(NOISE_CHANNEL);
 }
 
 static void
@@ -293,8 +289,8 @@ publish_noise(void) {
 static void
 noise_processing() {
   radio_set_channel(NOISE_CHANNEL);
-
   int rssi_value = radio_signal_strength_current();
+  radio_set_channel(RPL_CHANNEL);
 
   noise_values[position] = rssi_value + 110;
   printf("Noise lvl: %d dB\n", noise_values[position]);
