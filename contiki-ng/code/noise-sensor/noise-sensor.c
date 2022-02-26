@@ -293,7 +293,7 @@ publish_noise(void) {
 
 static void
 noise_processing() {
-  int rssi_value = radio_signal_strength_current();
+  int rssi_value = radio_signal_strength_last();
 
   //rv = NETSTACK_RADIO.get_value(RADIO_PARAM_POWER_MODE, &radio_channel);
   //printf("Result query RADIO POWER: %d\n", rv);
