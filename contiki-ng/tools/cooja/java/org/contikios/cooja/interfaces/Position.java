@@ -30,12 +30,6 @@
 
 package org.contikios.cooja.interfaces;
 
-import java.text.NumberFormat;
-import java.util.*;
-import javax.swing.*;
-import org.apache.log4j.Logger;
-import org.jdom.Element;
-
 import org.contikios.cooja.*;
 
 /**
