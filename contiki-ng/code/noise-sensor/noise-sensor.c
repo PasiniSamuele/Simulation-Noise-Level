@@ -289,7 +289,13 @@ publish_noise(void) {
 static void
 noise_processing() {
   radio_set_channel(NOISE_CHANNEL);
-  int rssi_value = radio_signal_strength_current();
+  
+  struct etimer sleep_timer;
+  etimer_set(&sleep_timer, 0.1 * CLOCK_SECOND);
+  PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&sleep_timer));
+
+  int rssi_value = radio_signal_strength_last();
+
   radio_set_channel(RPL_CHANNEL);
 
   noise_values[position] = rssi_value + 110;
