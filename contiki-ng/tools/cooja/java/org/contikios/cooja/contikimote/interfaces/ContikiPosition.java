@@ -36,9 +36,11 @@ import org.apache.log4j.Logger;
 import org.jdom.Element;
 import java.text.NumberFormat;
 
+
 import org.contikios.cooja.*;
 import org.contikios.cooja.contikimote.ContikiMoteInterface;
 import org.contikios.cooja.mote.memory.VarMemory;
+
 
 /**
  * An example of how to implement new mote interfaces.
@@ -106,13 +108,13 @@ public class ContikiPosition extends MoteInterface implements ContikiMoteInterfa
   }
 
   @Override
-  public Collection<org.contikios.cooja.Element> getConfigXML() {
+  public Collection<Element> getConfigXML() {
     // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public void setConfigXML(Collection<org.contikios.cooja.Element> configXML, boolean visAvailable) {
+  public void setConfigXML(<Element> configXML, boolean visAvailable) {
     // TODO Auto-generated method stub
     
   }
