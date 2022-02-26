@@ -34,7 +34,5 @@
 extern double X;
 extern double Y;
 extern double Z;
-extern int mario;
-
 
 #endif /* POSITION_INTF_H_ */
