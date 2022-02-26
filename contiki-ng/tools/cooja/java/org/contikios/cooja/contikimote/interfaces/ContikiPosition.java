@@ -41,6 +41,7 @@ import org.contikios.cooja.*;
 import org.contikios.cooja.contikimote.ContikiMoteInterface;
 import org.contikios.cooja.mote.memory.VarMemory;
 
+import org.contikios.cooja.interfaces.Position;
 
 /**
  * An example of how to implement new mote interfaces.
