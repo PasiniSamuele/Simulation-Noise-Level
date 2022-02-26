@@ -33,6 +33,7 @@ package org.contikios.cooja.contikimote.interfaces;
 import java.util.*;
 import javax.swing.*;
 import org.apache.log4j.Logger;
+import org.contikios.cooja.contikimote.ContikiMote;
 import org.jdom.Element;
 import java.text.NumberFormat;
 
@@ -66,11 +67,11 @@ import org.contikios.cooja.interfaces.Position;
 public class ContikiPosition extends MoteInterface implements ContikiMoteInterface, Observer {
   private static Logger logger = Logger.getLogger(ContikiPosition.class);
 
-  private Mote mote = null;
+  private ContikiMote mote;
   private VarMemory memory;
 
   public ContikiPosition(Mote mote) {
-    this.mote = mote;
+    this.mote = (ContikiMote) mote;
     
     memory = new VarMemory(mote.getMemory());
 
@@ -79,7 +80,7 @@ public class ContikiPosition extends MoteInterface implements ContikiMoteInterfa
 
   @Override
   public void update(Observable obs, Object obj) { 
-    mote = (Mote) obj;
+    mote = (ContikiMote) obj;
     
     Position pos = mote.getInterfaces().getPosition();
 
