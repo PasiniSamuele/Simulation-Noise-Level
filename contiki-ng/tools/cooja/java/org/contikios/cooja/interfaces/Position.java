@@ -30,11 +30,11 @@
 
 package org.contikios.cooja.interfaces;
 
+import java.text.NumberFormat;
 import java.util.*;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 import org.jdom.Element;
-import java.text.NumberFormat;
 
 import org.contikios.cooja.*;
 
@@ -47,25 +47,168 @@ import org.contikios.cooja.*;
  * @author Fredrik Osterlind
  */
 @ClassDescription("Position")
-public abstract class Position extends MoteInterface {
+public class Position extends MoteInterface {
+  private static Logger logger = Logger.getLogger(Position.class);
+  private Mote mote = null;
+  private double[] coords = new double[3];
 
-  public abstract void setCoordinates(double x, double y, double z);
+  /**
+   * Creates a position for given mote with coordinates (x=0, y=0, z=0).
+   *
+   * @param mote
+   *          Led's mote.
+   * @see Mote
+   * @see org.contikios.cooja.MoteInterfaceHandler
+   */
+  public Position(Mote mote) {
+    this.mote = mote;
 
-  public abstract double getXCoordinate();
+    coords[0] = 0.0f;
+    coords[1] = 0.0f;
+    coords[2] = 0.0f;
+  }
 
-  public abstract double getYCoordinate();
+  /**
+   * Set position to (x,y,z).
+   *
+   * @param x New X coordinate
+   * @param y New Y coordinate
+   * @param z New Z coordinate
+   */
+  public void setCoordinates(double x, double y, double z) {
+    coords[0] = x;
+    coords[1] = y;
+    coords[2] = z;
 
-  public abstract double getZCoordinate();
+    this.setChanged();
+    this.notifyObservers(mote);
+  }
 
-  public abstract double getDistanceTo(Position pos);
+  /**
+   * @return X coordinate
+   */
+  public double getXCoordinate() {
+    return coords[0];
+  }
 
-  public abstract double getDistanceTo(Mote m);
+  /**
+   * @return Y coordinate
+   */
+  public double getYCoordinate() {
+    return coords[1];
+  }
 
-  public abstract JPanel getInterfaceVisualizer();
+  /**
+   * @return Z coordinate
+   */
+  public double getZCoordinate() {
+    return coords[2];
+  }
 
-  public abstract void releaseInterfaceVisualizer(JPanel panel);
+  /**
+   * Calculates distance from this position to given position.
+   *
+   * @param pos Compared position
+   * @return Distance
+   */
+  public double getDistanceTo(Position pos) {
+    return Math.sqrt(Math.abs(coords[0] - pos.getXCoordinate())
+        * Math.abs(coords[0] - pos.getXCoordinate())
+        + Math.abs(coords[1] - pos.getYCoordinate())
+        * Math.abs(coords[1] - pos.getYCoordinate())
+        + Math.abs(coords[2] - pos.getZCoordinate())
+        * Math.abs(coords[2] - pos.getZCoordinate()));
+  }
 
-  public abstract Collection<Element> getConfigXML();
+  /**
+   * Calculates distance from associated mote to another mote.
+   *
+   * @param m Another mote
+   * @return Distance
+   */
+  public double getDistanceTo(Mote m) {
+    return getDistanceTo(m.getInterfaces().getPosition());
+  }
 
+  public JPanel getInterfaceVisualizer() {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    final NumberFormat form = NumberFormat.getNumberInstance();
+
+    final JLabel positionLabel = new JLabel();
+    positionLabel.setText("x=" + form.format(getXCoordinate()) + " "
+        + "y=" + form.format(getYCoordinate()) + " "
+        + "z=" + form.format(getZCoordinate()));
+
+    panel.add(positionLabel);
+
+    Observer observer;
+    this.addObserver(observer = new Observer() {
+      public void update(Observable obs, Object obj) {
+        positionLabel.setText("x=" + form.format(getXCoordinate()) + " "
+            + "y=" + form.format(getYCoordinate()) + " "
+            + "z=" + form.format(getZCoordinate()));
+      }
+    });
+
+    // Saving observer reference for releaseInterfaceVisualizer
+    panel.putClientProperty("intf_obs", observer);
+
+    return panel;
+  }
+
+  public void releaseInterfaceVisualizer(JPanel panel) {
+    Observer observer = (Observer) panel.getClientProperty("intf_obs");
+    if (observer == null) {
+      logger.fatal("Error when releasing panel, observer is null");
+      return;
+    }
+
+    this.deleteObserver(observer);
+  }
+
+  public Collection<Element> getConfigXML() {
+    Vector<Element> config = new Vector<Element>();
+    Element element;
+
+    // X coordinate
+    element = new Element("x");
+    element.setText(Double.toString(getXCoordinate()));
+    config.add(element);
+
+    // Y coordinate
+    element = new Element("y");
+    element.setText(Double.toString(getYCoordinate()));
+    config.add(element);
+
+    // Z coordinate
+    element = new Element("z");
+    element.setText(Double.toString(getZCoordinate()));
+    config.add(element);
+
+    return config;
+  }
+
+  public void setConfigXML(Collection<Element> configXML, boolean visAvailable) {
+    double x = 0, y = 0, z = 0;
+
+    for (Element element : configXML) {
+      if (element.getName().equals("x")) {
+        x = Double.parseDouble(element.getText());
+      }
+
+      if (element.getName().equals("y")) {
+        y = Double.parseDouble(element.getText());
+      }
+
+      if (element.getName().equals("z")) {
+        z = Double.parseDouble(element.getText());
+      }
+    }
+
+    setCoordinates(x, y, z);
+  }
+
+  
 
 }

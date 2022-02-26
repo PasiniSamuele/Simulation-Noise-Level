@@ -122,8 +122,6 @@ import org.contikios.cooja.plugins.skins.PositionVisualizerSkin;
 import org.contikios.cooja.plugins.skins.TrafficVisualizerSkin;
 import org.contikios.cooja.plugins.skins.UDGMVisualizerSkin;
 
-import org.contikios.cooja.contikimote.interfaces.ContikiPosition;
-
 /**
  * Simulation visualizer supporting different visualizers
  * Motes are painted in the XY-plane, as seen from positive Z axis.
@@ -1476,7 +1474,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   }
 
   public Position transformPixelToPosition(int x, int y) {
-    Position position = new ContikiPosition(null);
+    Position position = new Position(null);
     position.setCoordinates(
             transformToPositionX(x),
             transformToPositionY(y),
