@@ -375,7 +375,7 @@ mqtt_state_machine()
     }
     break;
   case STATE_SAMPLING:
-    noise_processing()
+    noise_processing();
     etimer_set(&mqtt_timer, conf.pub_interval);
     return;
   case STATE_DISCONNECTED:
