@@ -64,7 +64,7 @@ import org.contikios.cooja.interfaces.Position;
  */
 @ClassDescription("Position Interface")
 public class ContikiPosition extends MoteInterface implements ContikiMoteInterface, Observer {
-  private static java.util.logging.Logger logger = Logger.getLogger(ContikiPosition.class);
+  private static Logger logger = Logger.getLogger(ContikiPosition.class);
 
   private Mote mote = null;
   private VarMemory memory;
