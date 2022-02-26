@@ -40,9 +40,6 @@ import org.contikios.cooja.*;
 import org.contikios.cooja.contikimote.ContikiMoteInterface;
 import org.contikios.cooja.mote.memory.VarMemory;
 
-import org.contikios.cooja.interfaces.Position;
-
-
 /**
  * An example of how to implement new mote interfaces.
  *
@@ -63,7 +60,7 @@ import org.contikios.cooja.interfaces.Position;
  * @author Fredrik Osterlind
  */
 @ClassDescription("Position Interface")
-public class ContikiPosition extends Position implements ContikiMoteInterface {
+public class ContikiPosition extends MoteInterface implements ContikiMoteInterface {
   private static Logger logger = Logger.getLogger(ContikiPosition.class);
 
   private Mote mote = null;
@@ -94,6 +91,30 @@ public class ContikiPosition extends Position implements ContikiMoteInterface {
   public static String[] getCoreInterfaceDependencies() {
     // I need the corresponding C position interface (in position_intf.c)
     return new String[] { "position_interface" };
+  }
+
+  @Override
+  public JPanel getInterfaceVisualizer() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public void releaseInterfaceVisualizer(JPanel panel) {
+    // TODO Auto-generated method stub
+    
+  }
+
+  @Override
+  public Collection<org.contikios.cooja.Element> getConfigXML() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public void setConfigXML(Collection<org.contikios.cooja.Element> configXML, boolean visAvailable) {
+    // TODO Auto-generated method stub
+    
   }
 
 }
