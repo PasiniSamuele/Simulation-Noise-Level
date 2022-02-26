@@ -63,7 +63,7 @@ import org.contikios.cooja.interfaces.Position;
  * @author Fredrik Osterlind
  */
 @ClassDescription("Position Interface")
-public class ContikiPosition extends MoteInterface implements ContikiMoteInterface {
+public class ContikiPosition extends MoteInterface implements ContikiMoteInterface, Observer {
   private static Logger logger = Logger.getLogger(ContikiPosition.class);
 
   private Mote mote = null;
@@ -74,22 +74,22 @@ public class ContikiPosition extends MoteInterface implements ContikiMoteInterfa
     
     memory = new VarMemory(mote.getMemory());
 
-    Observer observer;
-    mote.getInterfaces().getPosition().addObserver(observer = new Observer() {
-      public void update(Observable obs, Object obj) { 
-        mote = (Mote) obj;
-        
-        Position pos = mote.getInterfaces().getPosition();
-
-        memory.setIntValueOf("coordX", (int) (pos.getXCoordinate() * 100));
-        memory.setIntValueOf("coordY", (int) (pos.getYCoordinate() * 100));
-        memory.setIntValueOf("coordZ", (int) (pos.getZCoordinate() * 100));
-
-        memory.setByteValueOf("positionChanged", (byte) 1);
-      }
-    });
-    
+    mote.getInterfaces().getPosition().addObserver(this);     
   }
+
+  @Override
+  public void update(Observable obs, Object obj) { 
+    this.mote = (Mote) obj;
+    
+    Position pos = mote.getInterfaces().getPosition();
+
+    memory.setIntValueOf("coordX", (int) (pos.getXCoordinate() * 100));
+    memory.setIntValueOf("coordY", (int) (pos.getYCoordinate() * 100));
+    memory.setIntValueOf("coordZ", (int) (pos.getZCoordinate() * 100));
+
+    memory.setByteValueOf("positionChanged", (byte) 1);
+  }
+
 
   public static String[] getCoreInterfaceDependencies() {
     // I need the corresponding C position interface (in position_intf.c)
