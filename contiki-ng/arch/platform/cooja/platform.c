@@ -58,6 +58,7 @@
 #include "net/netstack.h"
 #include "net/queuebuf.h"
 
+#include "dev/position_intf.h"
 #include "dev/eeprom.h"
 #include "dev/serial-line.h"
 #include "dev/cooja-radio.h"
@@ -97,6 +98,7 @@
 int main(void);
 
 /* Simulation mote interfaces */
+SIM_INTERFACE_NAME(position_interface);
 SIM_INTERFACE_NAME(moteid_interface);
 SIM_INTERFACE_NAME(vib_interface);
 SIM_INTERFACE_NAME(rs232_interface);
@@ -109,7 +111,7 @@ SIM_INTERFACE_NAME(clock_interface);
 SIM_INTERFACE_NAME(leds_interface);
 SIM_INTERFACE_NAME(cfs_interface);
 SIM_INTERFACE_NAME(eeprom_interface);
-SIM_INTERFACES(&vib_interface, &moteid_interface, &rs232_interface, &simlog_interface, &beep_interface, &radio_interface, &button_interface, &pir_interface, &clock_interface, &leds_interface, &cfs_interface, &eeprom_interface);
+SIM_INTERFACES(&position_interface, &vib_interface, &moteid_interface, &rs232_interface, &simlog_interface, &beep_interface, &radio_interface, &button_interface, &pir_interface, &clock_interface, &leds_interface, &cfs_interface, &eeprom_interface);
 /* Example: manually add mote interfaces */
 //SIM_INTERFACE_NAME(dummy_interface);
 //SIM_INTERFACES(..., &dummy_interface);

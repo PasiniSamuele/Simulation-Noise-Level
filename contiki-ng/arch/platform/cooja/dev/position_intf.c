@@ -28,37 +28,43 @@
  *
  */
 
-package org.contikios.cooja.interfaces;
+#include "position_intf.h"
+#include "lib/simEnvChange.h"
 
-import java.text.NumberFormat;
-import java.util.*;
-import javax.swing.*;
-import org.apache.log4j.Logger;
-import org.jdom.Element;
+#include <stdio.h>
 
-import org.contikios.cooja.*;
+const struct simInterface position_interface;
 
-/**
- * Mote 3D position.
- *
- * <p>
- * This observable notifies when the position is changed.
- *
- * @author Fredrik Osterlind
- */
-@ClassDescription("Position")
-public abstract class Position extends MoteInterface {
+char positionChanged;
 
-  public abstract void setCoordinates(double x, double y, double z);
+/* COOJA variables is shared between Cooja and Contiki */
+int coordX;
+int coordY;
+int coordZ;
 
-  public abstract double getXCoordinate();
+double X;
+double Y;
+double Z;
 
-  public abstract double getYCoordinate();
-
-  public abstract double getZCoordinate();
-
-  public abstract double getDistanceTo(Position pos);
-
-  public abstract double getDistanceTo(Mote m);
-
+/*-----------------------------------------------------------------------------------*/
+static void
+doInterfaceActionsBeforeTick(void)
+{
+  if (positionChanged) {
+    positionChanged = 0;
+    X = coordX / 100.0;
+    Y = coordY / 100.0;
+    Z = coordZ / 100.0;
+  }
 }
+/*-----------------------------------------------------------------------------------*/
+static void
+doInterfaceActionsAfterTick(void)
+{
+}
+/*-----------------------------------------------------------------------------------*/
+
+/* Register interface */
+SIM_INTERFACE(position_interface,
+	      doInterfaceActionsBeforeTick,
+	      doInterfaceActionsAfterTick);

@@ -28,37 +28,14 @@
  *
  */
 
-package org.contikios.cooja.interfaces;
+#ifndef POSITION_INTF_H_
+#define POSITION_INTF_H_
 
-import java.text.NumberFormat;
-import java.util.*;
-import javax.swing.*;
-import org.apache.log4j.Logger;
-import org.jdom.Element;
+// Interface needs to include something?
 
-import org.contikios.cooja.*;
+extern double X;
+extern double Y;
+extern double Z;
 
-/**
- * Mote 3D position.
- *
- * <p>
- * This observable notifies when the position is changed.
- *
- * @author Fredrik Osterlind
- */
-@ClassDescription("Position")
-public abstract class Position extends MoteInterface {
 
-  public abstract void setCoordinates(double x, double y, double z);
-
-  public abstract double getXCoordinate();
-
-  public abstract double getYCoordinate();
-
-  public abstract double getZCoordinate();
-
-  public abstract double getDistanceTo(Position pos);
-
-  public abstract double getDistanceTo(Mote m);
-
-}
+#endif /* POSITION_INTF_H_ */
