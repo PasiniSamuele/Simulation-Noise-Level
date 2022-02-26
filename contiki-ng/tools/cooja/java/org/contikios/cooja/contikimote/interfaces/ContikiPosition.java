@@ -95,28 +95,20 @@ public class ContikiPosition extends MoteInterface implements ContikiMoteInterfa
     return new String[] { "position_interface" };
   }
 
-  @Override
+
   public JPanel getInterfaceVisualizer() {
-    // TODO Auto-generated method stub
     return null;
   }
 
-  @Override
   public void releaseInterfaceVisualizer(JPanel panel) {
-    // TODO Auto-generated method stub
-    
   }
 
-  @Override
   public Collection<Element> getConfigXML() {
-    // TODO Auto-generated method stub
     return null;
   }
 
-  @Override
-  public void setConfigXML(<Element> configXML, boolean visAvailable) {
-    // TODO Auto-generated method stub
-    
+  public void setConfigXML(Collection<Element> configXML, boolean visAvailable) {
   }
+
 
 }
