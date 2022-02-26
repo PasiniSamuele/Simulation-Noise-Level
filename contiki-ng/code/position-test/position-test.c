@@ -38,7 +38,7 @@
  */
 
 #include "contiki.h"
-//#include "dev/position_intf.h"
+#include "dev/position_intf.h"
 #include "dev/moteid.h"
 
 #include <stdio.h> /* For printf() */
