@@ -240,6 +240,7 @@ init_config(void)
 static void
 publish(char *value)
 {
+  region[strlen(region)-1] = '\0';  //remove last \n
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s, \"X\": %s, \"Y\": %s, \"region\": %s}", value, x, y , region);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
@@ -301,7 +302,10 @@ publish_noise(void) {
 static void
 noise_processing() {
  
-  cfs_read(fd, buf, sizeof(message));
+  if(cfs_read(fd, buf, sizeof(message))==0){
+    cfs_seek(fd, 0, CFS_SEEK_SET);
+    cfs_read(fd, buf, sizeof(message));
+  }
   LOG_INFO("READ\n");
   LOG_INFO("%s\n", buf);
   char *token;
@@ -315,7 +319,7 @@ noise_processing() {
   y =token ;
   token = strtok(NULL, delim);
   region =token;
-  printf("Noise lvl: %s dB\n", noise_values[position]);
+  printf("Noise lvl: %f dB\n", noise_values[position]);
 
   publish_noise();
   position = (position + 1) % MAX_WINDOW_SIZE;
