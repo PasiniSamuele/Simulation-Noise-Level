@@ -479,7 +479,7 @@ LOG_INFO("%d\n", fd);
 PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
 {
   PROCESS_BEGIN();
-  setlocale(LC_NUMERIC, "en-US");
+  setlocale(LC_ALL, "en_US");
 
   init_noise_values();
   init_file_reading();
