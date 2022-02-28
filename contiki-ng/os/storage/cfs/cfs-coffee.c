@@ -991,6 +991,7 @@ cfs_open(const char *name, int flags)
 
   fdp->file = find_file(name);
   if(fdp->file == NULL) {
+    LOG_INFO("not found");
     if((flags & (CFS_READ | CFS_WRITE)) == CFS_READ) {
       return -1;
     }
