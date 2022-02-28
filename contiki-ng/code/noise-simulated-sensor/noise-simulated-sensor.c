@@ -458,8 +458,9 @@ init_file_reading(void) {
 		LOG_WARN("Failed to open");
  }
  else{
-   LOG_INFO("File opened");
+    LOG_INFO("File opened");
     cfs_seek(fd, 0, CFS_SEEK_SET);
+    LOG_INFO("Seek done");
     cfs_read(fd, buf, sizeof(message));
     LOG_INFO("READ");
     LOG_INFO("%s", buf);
