@@ -459,6 +459,7 @@ init_file_reading(void) {
  }
  else{
    LOG_INFO("File opened");
+    cfs_seek(fd, 0, CFS_SEEK_SET);
     cfs_read(fd, buf, sizeof(message));
     LOG_INFO("READ");
     LOG_INFO("%s", buf);
