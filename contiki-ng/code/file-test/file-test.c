@@ -40,20 +40,20 @@ printf("%d\n", fd);
     printf("READ\n");
     printf("%s\n", buf);
     char *token;
-    printf("%s", buf);
+    printf("%s\n", buf);
     const char delim[2] =",";
     token = strtok(buf, delim);
     char *noise_values =token;
-    printf("%s",noise_values);
+    printf("%s\n",noise_values);
     token = strtok(NULL, delim);
     char *x =token;
-    printf("%s",x);
+    printf("%s\n",x);
     token = strtok(NULL, delim);
     char *y =token ;
-    printf("%s",y);
+    printf("%s\n",y);
     token = strtok(NULL, delim);
     char *region =token;
-    printf("%s",region);
+    printf("%s\n",region);
  }
 
 }
