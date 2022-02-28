@@ -37,6 +37,9 @@ static char* y;
 static char* region;
 
 /*---------------------------------------------------------------------------*/
+#define PUBLISH_MODE_RAW 0
+#define PUBLISH_MODE_AVG 1
+/*---------------------------------------------------------------------------*/
 /*
  * Publish to a local MQTT broker (e.g. mosquitto) running on
  * the node that hosts your border router
@@ -239,10 +242,23 @@ init_config(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
-publish(char *value)
+publish(char *value, int mode)
 {
+  char mode_str[PARSE_BUFFER_SIZE];
+
+  switch (mode) {
+    case PUBLISH_MODE_AVG:
+      strcpy(mode_str, "avg");
+      break;
+    case PUBLISH_MODE_RAW:
+      strcpy(mode_str, "raw");
+      break;
+    default:
+      strcpy(mode_str, "unknown");
+  }
+
   region[strlen(region)-1] = '\0';  //remove last \n
-  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s, \"X\": %s, \"Y\": %s, \"region\": %s}", value, x, y , region);
+  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s, \"mode\": %s,\"coordX\": %s, \"coordY\": %s, \"region\": %s}", value,mode_str, x, y , region);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
@@ -262,7 +278,7 @@ publish_avg(double avg) {
   char avg_string[PARSE_BUFFER_SIZE];
   snprintf(avg_string, PARSE_BUFFER_SIZE, "%.2f", avg);
 
-  publish(avg_string);
+  publish(avg_string, PUBLISH_MODE_AVG);
 }
 
 static void
@@ -280,7 +296,7 @@ publish_raw(void) {
   // Replaces last ',' with ']'
   final_string[len - 1] = ']';
 
-  publish(final_string);
+  publish(final_string, PUBLISH_MODE_RAW);
 }
 
 static void
