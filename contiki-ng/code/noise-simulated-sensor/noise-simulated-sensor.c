@@ -302,7 +302,7 @@ static void
 noise_processing() {
   cfs_read(fd, buf, sizeof(buf));
   char *token;
-  printf("%s", buf);
+  LOG_INFO("%s", buf);
   const char delim[2] =",";
   token = strtok(buf, delim);
   noise_values[position] =token - '0';
@@ -454,10 +454,10 @@ static void
 init_file_reading(void) {
  fd = cfs_open(FILENAME ,CFS_READ);
  if(fd < 0) {
-		printf("failed to open");
+		LOG_WARN("failed to open");
  }
  else{
-   printf("file opened");
+   LOG_INFO("file opened");
  }
 }
 
