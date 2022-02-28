@@ -459,7 +459,7 @@ init_file_reading(void) {
  else{
    LOG_INFO("File opened");
     cfs_read(fd, buf, sizeof(buf));
-    char *token;
+
     LOG_INFO("%s", buf);
  }
 
