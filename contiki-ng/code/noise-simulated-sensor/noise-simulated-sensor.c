@@ -269,7 +269,7 @@ publish_raw(void) {
   char final_string[MAX_WINDOW_SIZE * PARSE_BUFFER_SIZE] = "[";  
 
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {    
-    snprintf(double_string, PARSE_BUFFER_SIZE, "\"%d\",", noise_values[i]);
+    snprintf(double_string, PARSE_BUFFER_SIZE, "\"%s\",", noise_values[i]);
     strcat(final_string, double_string);
   }
 
