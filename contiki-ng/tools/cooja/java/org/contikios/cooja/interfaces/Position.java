@@ -53,6 +53,7 @@ public class Position extends MoteInterface {
   private static Logger logger = Logger.getLogger(Position.class);
   private Mote mote = null;
   private double[] coords = new double[3];
+  private int region = 0;
 
   /**
    * Creates a position for given mote with coordinates (x=0, y=0, z=0).
@@ -68,6 +69,13 @@ public class Position extends MoteInterface {
     coords[0] = 0.0f;
     coords[1] = 0.0f;
     coords[2] = 0.0f;
+    region = Integer.parseInt(
+      mote.getSimulation()
+              .getTitle()
+              .toLowerCase()
+              .replaceAll("region","")
+              .trim()
+    );
   }
 
   /**
@@ -92,7 +100,7 @@ public class Position extends MoteInterface {
       memory.setIntValueOf("coordX", (int) (coords[0] * 100));
       memory.setIntValueOf("coordY", (int) (coords[1] * 100));
       memory.setIntValueOf("coordZ", (int) (coords[2] * 100));
-
+      memory.setIntValueOf("REGION", (int) (this.region);
       memory.setByteValueOf("positionChanged", (byte) 1);
     }
   }

@@ -34,5 +34,6 @@
 extern double X;
 extern double Y;
 extern double Z;
+extern double REGION;
 
 #endif /* POSITION_INTF_H_ */

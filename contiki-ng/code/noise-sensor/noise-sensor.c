@@ -2,6 +2,7 @@
 #include "mqtt.h"
 #include "rpl.h"
 #include "dev/cooja-radio.h"
+#include "dev/position_intf.h"
 #include "net/ipv6/uip.h"
 #include "net/ipv6/sicslowpan.h"
 #include "sys/etimer.h"
@@ -227,9 +228,9 @@ init_config(void)
 }
 /*---------------------------------------------------------------------------*/
 static void
-publish(char *value)
+publish(char *value, int x, int y, int region)
 {
-  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s}", value);
+  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s, \"X\": %d, \"Y\": %d, \"region\": %d}", value, x, y , region);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
@@ -249,7 +250,7 @@ publish_avg(double avg) {
   char avg_string[PARSE_BUFFER_SIZE];
   snprintf(avg_string, PARSE_BUFFER_SIZE, "\"%.2f\"", avg);
 
-  publish(avg_string);
+  publish(avg_string, X, Y, REGION);
 }
 
 static void
@@ -267,7 +268,7 @@ publish_raw(void) {
   // Replaces last ',' with ']'
   final_string[len - 1] = ']';
 
-  publish(final_string);
+  publish(final_string, X, Y, REGION);
 }
 
 static void
