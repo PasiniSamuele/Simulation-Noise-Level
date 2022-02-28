@@ -44,7 +44,7 @@ printf("%d\n", fd);
     printf("%s\n", buf);
     const char delim[2] =",";
     token = strtok(buf, delim);
-    int32_t noise_values =atoi(token);
+    double noise_values =atof(token);
     printf("%d\n",noise_values);
     token = strtok(NULL, delim);
     char *x =token;
