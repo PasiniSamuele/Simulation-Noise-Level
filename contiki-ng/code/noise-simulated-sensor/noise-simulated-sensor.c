@@ -22,7 +22,7 @@
 #define NOISE_CHANNEL 5
 #define RPL_CHANNEL 26
 
-#define FILENAME "test.csv"
+#define FILENAME "test1.csv"
 
 static char* noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
@@ -454,7 +454,7 @@ init_noise_values(void) {
 
 static void
 init_file_reading(void) {
-fd = cfs_open("asdasd.sdgfsd" ,CFS_READ);
+fd = cfs_open(FILENAME ,CFS_READ);
 LOG_INFO("%d\n", fd);
  if(fd < 0) {
 		LOG_WARN("Failed to open");
