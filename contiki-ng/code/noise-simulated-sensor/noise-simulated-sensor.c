@@ -313,14 +313,14 @@ noise_processing() {
   LOG_INFO("%s", buf);
   const char delim[2] =",";
   token = strtok(buf, delim);
-  noise_values[position] =atof(token);
+  noise_values[position] =atoi(token);
   token = strtok(NULL, delim);
   x =token;
   token = strtok(NULL, delim);
   y =token ;
   token = strtok(NULL, delim);
   region =token;
-  printf("Noise lvl: %f dB\n", noise_values[position]);
+  printf("Noise lvl: %d dB\n", noise_values[position]);
 
   publish_noise();
   position = (position + 1) % MAX_WINDOW_SIZE;
