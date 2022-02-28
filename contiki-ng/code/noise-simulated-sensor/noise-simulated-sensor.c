@@ -24,7 +24,7 @@
 
 #define FILENAME "test1.csv"
 
-static double noise_values[MAX_WINDOW_SIZE];
+static uint16_t noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
 
 static struct etimer mqtt_timer;
@@ -271,7 +271,7 @@ publish_raw(void) {
   char final_string[MAX_WINDOW_SIZE * PARSE_BUFFER_SIZE] = "[";  
 
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {    
-    snprintf(double_string, PARSE_BUFFER_SIZE, "%f,", noise_values[i]);
+    snprintf(double_string, PARSE_BUFFER_SIZE, "%d,", noise_values[i]);
     strcat(final_string, double_string);
   }
 

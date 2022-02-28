@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
+#include <locale.h>
 
 #define LOG_MODULE "MQTT-UTIL"
 #define LOG_LEVEL LOG_LEVEL_INFO
@@ -247,7 +249,7 @@ publish(char *value, int mode)
   }
 
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, 
-        "{\"noise\": %s, \"mode\": \"%s\",  \"coordX\": \"%.2f\", \"coordY\": \"%.2f\", \"region\": %d}", 
+        "{\"noise\": %s, \"mode\": %s,  \"coordX\": %.2f, \"coordY\": %.2f, \"region\": %d}", 
         value, mode_str, X, Y , REGION);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
@@ -266,7 +268,7 @@ publish(char *value, int mode)
 static void
 publish_avg(double avg) {
   char avg_string[PARSE_BUFFER_SIZE];
-  snprintf(avg_string, PARSE_BUFFER_SIZE, "\"%.2f\"", avg);
+  snprintf(avg_string, PARSE_BUFFER_SIZE, "%.2f", avg);
 
   publish(avg_string, PUBLISH_MODE_AVG);
 }
@@ -277,7 +279,7 @@ publish_raw(void) {
   char final_string[MAX_WINDOW_SIZE * PARSE_BUFFER_SIZE] = "[";  
 
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {    
-    snprintf(double_string, PARSE_BUFFER_SIZE, "\"%d\",", noise_values[i]);
+    snprintf(double_string, PARSE_BUFFER_SIZE, "%d,", noise_values[i]);
     strcat(final_string, double_string);
   }
 
@@ -454,6 +456,7 @@ init_noise_values(void) {
 PROCESS_THREAD(noise_sensor_process, ev, data)
 {
   PROCESS_BEGIN();
+  setlocale(LC_NUMERIC, "en_US.utf8");
 
   init_noise_values();
   init_config();
