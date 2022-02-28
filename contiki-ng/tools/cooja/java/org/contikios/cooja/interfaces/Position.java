@@ -35,6 +35,7 @@ import java.util.*;
 import javax.swing.*;
 import org.apache.log4j.Logger;
 import org.contikios.cooja.mote.memory.VarMemory;
+import org.contikios.cooja.contikimote.ContikiMoteType;
 import org.jdom.Element;
 
 import org.contikios.cooja.*;
@@ -84,7 +85,7 @@ public class Position extends MoteInterface {
     this.setChanged();
     this.notifyObservers(mote);
 
-    if (mote != null) {
+    if (mote != null && mote.getType() instanceof ContikiMoteType) {
       VarMemory memory = new VarMemory(mote.getMemory());
 
       memory.setIntValueOf("coordX", (int) (coords[0] * 100));
