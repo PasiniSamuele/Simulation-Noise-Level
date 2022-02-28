@@ -69,6 +69,8 @@ public class Position extends MoteInterface {
     coords[0] = 0.0f;
     coords[1] = 0.0f;
     coords[2] = 0.0f;
+    System.out.println(mote.getSimulation()
+              .getTitle());
     region = Integer.parseInt(
       mote.getSimulation()
               .getTitle()
