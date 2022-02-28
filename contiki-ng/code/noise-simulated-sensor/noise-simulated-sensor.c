@@ -24,16 +24,16 @@
 
 #define FILENAME "test.csv"
 
-static uint16_t noise_values[MAX_WINDOW_SIZE];
+static char* noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
 
 static struct etimer mqtt_timer;
 
 static int fd;
 static char buf[64];
-static int x;
-static int y;
-static int region;
+static char* x;
+static char* y;
+static char* region;
 
 /*---------------------------------------------------------------------------*/
 /*
@@ -286,7 +286,7 @@ publish_noise(void) {
   double avg = 0;
   
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
-    avg += noise_values[i];
+    avg += noise_values[i] - "0";
   }
   
   avg /= MAX_WINDOW_SIZE;
