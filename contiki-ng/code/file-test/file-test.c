@@ -10,7 +10,7 @@
 
 static int32_t fd;
 static char buf[64];
-static char message[32];
+static char message[13];
 /*static char* x;
 static char* y;
 static char* region;*/
