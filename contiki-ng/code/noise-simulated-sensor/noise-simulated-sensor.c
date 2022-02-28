@@ -31,6 +31,7 @@ static struct etimer mqtt_timer;
 
 static int fd;
 static char buf[64];
+static char message[32];
 static char* x;
 static char* y;
 static char* region;
@@ -458,8 +459,8 @@ init_file_reading(void) {
  }
  else{
    LOG_INFO("File opened");
-    cfs_read(fd, buf, sizeof(buf));
-
+    cfs_read(fd, buf, sizeof(message));
+    LOG_INFO("READ");
     LOG_INFO("%s", buf);
  }
 
