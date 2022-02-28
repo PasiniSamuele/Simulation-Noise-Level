@@ -454,11 +454,15 @@ static void
 init_file_reading(void) {
  fd = cfs_open(FILENAME ,CFS_READ);
  if(fd < 0) {
-		LOG_WARN("failed to open");
+		LOG_WARN("Failed to open");
  }
  else{
-   LOG_INFO("file opened");
+   LOG_INFO("File opened");
+    cfs_read(fd, buf, sizeof(buf));
+    char *token;
+    LOG_INFO("%s", buf);
  }
+
 }
 
 PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
