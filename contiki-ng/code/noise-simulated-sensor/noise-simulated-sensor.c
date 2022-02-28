@@ -287,7 +287,7 @@ publish_noise(void) {
   double avg = 0;
   
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
-    avg += noise_values[i] - "0";
+    avg += atoi(noise_values[i]);
   }
   
   avg /= MAX_WINDOW_SIZE;
@@ -316,7 +316,7 @@ noise_processing() {
   y =token ;
   token = strtok(NULL, delim);
   region =token;
-  printf("Noise lvl: %d dB\n", noise_values[position]);
+  printf("Noise lvl: %s dB\n", noise_values[position]);
 
   publish_noise();
   position = (position + 1) % MAX_WINDOW_SIZE;
