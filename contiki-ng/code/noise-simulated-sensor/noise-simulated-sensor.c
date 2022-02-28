@@ -240,7 +240,7 @@ init_config(void)
 static void
 publish(char *value)
 {
-  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s, \"X\": %d, \"Y\": %d, \"region\": %d}", value, x, y , region);
+  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s, \"X\": %s, \"Y\": %s, \"region\": %s}", value, x, y , region);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
