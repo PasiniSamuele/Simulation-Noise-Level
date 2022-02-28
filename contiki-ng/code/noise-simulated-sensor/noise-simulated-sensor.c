@@ -301,6 +301,7 @@ publish_noise(void) {
 
 static void
 noise_processing() {
+ 
   cfs_read(fd, buf, sizeof(buf));
   char *token;
   LOG_INFO("%s", buf);
@@ -453,7 +454,8 @@ init_noise_values(void) {
 
 static void
 init_file_reading(void) {
- fd = cfs_open("asdasd" ,CFS_READ);
+fd = -1;
+fd = cfs_open("asdasd" ,CFS_READ);
 LOG_INFO("%d\n", fd);
  if(fd < 0) {
 		LOG_WARN("Failed to open");
