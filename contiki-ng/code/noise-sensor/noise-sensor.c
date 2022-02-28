@@ -237,13 +237,13 @@ publish(char *value, int mode)
 
   switch (mode) {
     case PUBLISH_MODE_AVG:
-      mode_str = "avg";
+      strcpy(mode_str, "avg");
       break;
     case PUBLISH_MODE_RAW:
-      mode_str = "raw";
+      strcpy(mode_str, "raw");
       break;
     default:
-      mode_str = "unknown";
+      strcpy(mode_str, "unknown");
   }
 
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, 
