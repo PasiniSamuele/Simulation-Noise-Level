@@ -260,7 +260,7 @@ publish(char *value)
 static void
 publish_avg(double avg) {
   char avg_string[PARSE_BUFFER_SIZE];
-  snprintf(avg_string, PARSE_BUFFER_SIZE, "\"%.2f\"", avg);
+  snprintf(avg_string, PARSE_BUFFER_SIZE, "%.2f", avg);
 
   publish(avg_string);
 }
@@ -271,7 +271,7 @@ publish_raw(void) {
   char final_string[MAX_WINDOW_SIZE * PARSE_BUFFER_SIZE] = "[";  
 
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {    
-    snprintf(double_string, PARSE_BUFFER_SIZE, "\"%f\",", noise_values[i]);
+    snprintf(double_string, PARSE_BUFFER_SIZE, "%f,", noise_values[i]);
     strcat(final_string, double_string);
   }
 
@@ -479,7 +479,7 @@ LOG_INFO("%d\n", fd);
 PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
 {
   PROCESS_BEGIN();
-  setlocale(LC_NUMERIC, "en_US");
+  setlocale(LC_NUMERIC, "en-US");
 
   init_noise_values();
   init_file_reading();
