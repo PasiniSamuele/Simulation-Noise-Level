@@ -249,7 +249,7 @@ publish(char *value, int mode)
   }
 
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, 
-        "{\"noise\": %s, \"mode\": %s,  \"coordX\": %.2f, \"coordY\": %.2f, \"region\": %d}", 
+        "{\"noise\": %s, \"mode\": \"%s\",  \"coordX\": %.2f, \"coordY\": %.2f, \"region\": %d}", 
         value, mode_str, X, Y , REGION);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
