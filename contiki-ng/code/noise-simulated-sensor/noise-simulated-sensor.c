@@ -29,7 +29,7 @@ static uint16_t position;
 
 static struct etimer mqtt_timer;
 
-static int fd;
+static int32_t fd;
 static char buf[64];
 static char message[32];
 static char* x;
