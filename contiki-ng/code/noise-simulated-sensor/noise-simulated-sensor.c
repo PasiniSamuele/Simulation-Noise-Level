@@ -2,7 +2,6 @@
 #include "mqtt.h"
 #include "rpl.h"
 #include "dev/cooja-radio.h"
-#include "dev/position_intf.h"
 #include "net/ipv6/uip.h"
 #include "net/ipv6/sicslowpan.h"
 #include "sys/etimer.h"
@@ -12,6 +11,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define LOG_MODULE "MQTT-UTIL"
 #define LOG_LEVEL LOG_LEVEL_INFO
@@ -19,7 +19,6 @@
 #define MAX_WINDOW_SIZE 6
 #define AVG_THRESHOLD_DB 70
 #define PARSE_BUFFER_SIZE 15
-#define NOISE_CHANNEL 5
 #define RPL_CHANNEL 26
 
 #define FILENAME "test1.csv"
@@ -287,7 +286,7 @@ publish_noise(void) {
   double avg = 0;
   
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
-    avg += atoi(noise_values[i]);
+    avg += atof(noise_values[i]);
   }
   
   avg /= MAX_WINDOW_SIZE;
@@ -376,8 +375,6 @@ mqtt_state_machine()
     if(mqtt_ready(&conn) && conn.out_buffer_sent) {
       /* Connected; sampling */
       LOG_INFO("Noise sampling started\n");
-
-      radio_set_channel(NOISE_CHANNEL);
       state = STATE_SAMPLING;
       etimer_set(&mqtt_timer, 0.1 * CLOCK_SECOND);
       /* Return here so we don't end up rescheduling the timer */
