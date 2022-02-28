@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+#include <locale.h>
 
 #define LOG_MODULE "MQTT-UTIL"
 #define LOG_LEVEL LOG_LEVEL_INFO
@@ -30,7 +31,7 @@ static struct etimer mqtt_timer;
 
 static int32_t fd;
 static char buf[64];
-static char message[13];
+static char message[17];
 static char* x;
 static char* y;
 static char* region;
@@ -478,6 +479,7 @@ LOG_INFO("%d\n", fd);
 PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
 {
   PROCESS_BEGIN();
+  setlocale(LC_NUMERIC, "en_US");
 
   init_noise_values();
   init_file_reading();
