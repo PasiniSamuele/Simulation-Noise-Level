@@ -23,7 +23,7 @@
 
 #define FILENAME "test1.csv"
 
-static char* noise_values[MAX_WINDOW_SIZE];
+static double noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
 
 static struct etimer mqtt_timer;
@@ -286,7 +286,7 @@ publish_noise(void) {
   double avg = 0;
   
   for (size_t i = 0; i < MAX_WINDOW_SIZE; i++) {
-    avg += atof(noise_values[i]);
+    avg += noise_values[i];
   }
   
   avg /= MAX_WINDOW_SIZE;
@@ -308,7 +308,7 @@ noise_processing() {
   LOG_INFO("%s", buf);
   const char delim[2] =",";
   token = strtok(buf, delim);
-  noise_values[position] =token;
+  noise_values[position] =atof(token);
   token = strtok(NULL, delim);
   x =token;
   token = strtok(NULL, delim);
