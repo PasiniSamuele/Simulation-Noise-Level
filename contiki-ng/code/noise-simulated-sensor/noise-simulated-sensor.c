@@ -302,7 +302,7 @@ static void
 noise_processing() {
   cfs_read(fd, buf, sizeof(buf));
   char *token;
-  print("%s", buf);
+  printf("%s", buf);
   const char delim[2] =",";
   token = strtok(buf, delim);
   noise_values[position] =token - '0';
