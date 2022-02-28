@@ -53,8 +53,6 @@ public class Position extends MoteInterface {
   private static Logger logger = Logger.getLogger(Position.class);
   private Mote mote = null;
   private double[] coords = new double[3];
-  private int region = 0;
-
   /**
    * Creates a position for given mote with coordinates (x=0, y=0, z=0).
    *
@@ -69,15 +67,7 @@ public class Position extends MoteInterface {
     coords[0] = 0.0f;
     coords[1] = 0.0f;
     coords[2] = 0.0f;
-    System.out.println(mote.getSimulation()
-              .getTitle());
-    region = Integer.parseInt(
-      mote.getSimulation()
-              .getTitle()
-              .toLowerCase()
-              .replaceAll("region","")
-              .trim()
-    );
+    
   }
 
   /**
@@ -98,6 +88,13 @@ public class Position extends MoteInterface {
     // Update position into mote memory
     if (mote != null && mote.getType() instanceof ContikiMoteType) {
       VarMemory memory = new VarMemory(mote.getMemory());
+      region = Integer.parseInt(
+        mote.getSimulation()
+                .getTitle()
+                .toLowerCase()
+                .replaceAll("region","")
+                .trim()
+      );
 
       memory.setIntValueOf("coordX", (int) (coords[0] * 100));
       memory.setIntValueOf("coordY", (int) (coords[1] * 100));
@@ -126,13 +123,6 @@ public class Position extends MoteInterface {
    */
   public double getZCoordinate() {
     return coords[2];
-  }
-
-  /**
-   * @return region 
-   */
-  public double getRegion() {
-    return region;
   }
 
   /**
