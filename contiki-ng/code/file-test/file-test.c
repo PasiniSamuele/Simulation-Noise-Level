@@ -43,7 +43,7 @@ printf("%d\n", fd);
 
 }
 
-PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
+PROCESS_THREAD(file_test_process, ev, data)
 {
   PROCESS_BEGIN();
   init_file_reading();
