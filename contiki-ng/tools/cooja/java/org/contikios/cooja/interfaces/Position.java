@@ -88,7 +88,7 @@ public class Position extends MoteInterface {
     // Update position into mote memory
     if (mote != null && mote.getType() instanceof ContikiMoteType) {
       VarMemory memory = new VarMemory(mote.getMemory());
-      region = Integer.parseInt(
+      int region = Integer.parseInt(
         mote.getSimulation()
                 .getTitle()
                 .toLowerCase()
