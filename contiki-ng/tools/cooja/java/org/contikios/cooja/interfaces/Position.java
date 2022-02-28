@@ -100,7 +100,7 @@ public class Position extends MoteInterface {
       memory.setIntValueOf("coordX", (int) (coords[0] * 100));
       memory.setIntValueOf("coordY", (int) (coords[1] * 100));
       memory.setIntValueOf("coordZ", (int) (coords[2] * 100));
-      memory.setIntValueOf("REGION", (int) (this.region);
+      memory.setIntValueOf("REGION", (int) (this.region));
       memory.setByteValueOf("positionChanged", (byte) 1);
     }
   }
