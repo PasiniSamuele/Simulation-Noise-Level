@@ -301,15 +301,15 @@ publish_noise(void) {
 static void
 noise_processing() {
   int r = cfs_read(fd, buf, sizeof(buf));
-  char * token;
-  const char delim[2] =",",
+  char *token;
+  const char delim[2] =",";
   token = strtok(buf, delim);
   noise_values[position] =token - '0';
-  token = strtok(buf, delim);
+  token = strtok(NULL, delim);
   x =token - '0';
-  token = strtok(buf, delim);
+  token = strtok(NULL, delim);
   y =token - '0';
-  token = strtok(buf, delim);
+  token = strtok(NULL, delim);
   region =token - '0';
   printf("Noise lvl: %d dB\n", noise_values[position]);
 
