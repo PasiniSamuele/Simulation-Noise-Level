@@ -458,8 +458,8 @@ init_file_reading(void) {
 if(file ==NULL){
   	LOG_WARN("File null");
 }*/
-cfs_close(fd);
-fd = cfs_open(FILENAME ,CFS_READ);
+//cfs_close(fd);
+fd = cfs_open("pierpaolo.csv" ,CFS_READ);
 LOG_INFO("%d\n", fd);
  if(fd < 0) {
 		LOG_WARN("Failed to open");
