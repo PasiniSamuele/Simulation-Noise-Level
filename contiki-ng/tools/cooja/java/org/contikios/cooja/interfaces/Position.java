@@ -84,6 +84,8 @@ public class Position extends MoteInterface {
     this.setChanged();
     this.notifyObservers(mote);
 
+    System.out.println(mote.getType());
+
     if (mote != null) {
       VarMemory memory = new VarMemory(mote.getMemory());
 
