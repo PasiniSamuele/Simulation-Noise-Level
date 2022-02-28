@@ -31,7 +31,7 @@ static struct etimer mqtt_timer;
 
 static int32_t fd;
 static char buf[64];
-static char message[32];
+static char message[13];
 static char* x;
 static char* y;
 static char* region;
@@ -302,18 +302,20 @@ publish_noise(void) {
 static void
 noise_processing() {
  
-  cfs_read(fd, buf, sizeof(buf));
+  cfs_read(fd, buf, sizeof(message));
+  LOG_INFO("READ\n");
+  LOG_INFO("%s\n", buf);
   char *token;
   LOG_INFO("%s", buf);
   const char delim[2] =",";
   token = strtok(buf, delim);
-  noise_values[position] =token - '0';
+  noise_values[position] =token;
   token = strtok(NULL, delim);
-  x =token - '0';
+  x =token;
   token = strtok(NULL, delim);
-  y =token - '0';
+  y =token ;
   token = strtok(NULL, delim);
-  region =token - '0';
+  region =token;
   printf("Noise lvl: %d dB\n", noise_values[position]);
 
   publish_noise();
@@ -468,9 +470,6 @@ LOG_INFO("%d\n", fd);
     LOG_INFO("File opened\n");
     cfs_seek(fd, 0, CFS_SEEK_SET);
     LOG_INFO("Seek done\n");
-    cfs_read(fd, buf, sizeof(message));
-    LOG_INFO("READ\n");
-    LOG_INFO("%s\n", buf);
  }
 
 }
