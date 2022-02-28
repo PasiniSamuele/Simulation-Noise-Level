@@ -11,9 +11,9 @@
 static int32_t fd;
 static char buf[64];
 static char message[32];
-static char* x;
+/*static char* x;
 static char* y;
-static char* region;
+static char* region;*/
 
 
 PROCESS(file_test_process, "Noise simulated sensor process");
@@ -28,17 +28,17 @@ if(file ==NULL){
 }*/
 //cfs_close(fd);
 fd = cfs_open("pierpaolo.csv" ,CFS_READ);
-LOG_INFO("%d\n", fd);
+printf("%d\n", fd);
  if(fd < 0) {
-		LOG_WARN("Failed to open");
+		printf("Failed to open");
  }
  else{
-    LOG_INFO("File opened\n");
+    printf("File opened\n");
     cfs_seek(fd, 0, CFS_SEEK_SET);
-    LOG_INFO("Seek done\n");
+    printf("Seek done\n");
     cfs_read(fd, buf, sizeof(message));
-    LOG_INFO("READ\n");
-    LOG_INFO("%s\n", buf);
+    printf("READ\n");
+    printf("%s\n", buf);
  }
 
 }
