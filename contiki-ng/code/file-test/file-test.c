@@ -39,6 +39,21 @@ printf("%d\n", fd);
     cfs_read(fd, buf, sizeof(message));
     printf("READ\n");
     printf("%s\n", buf);
+    char *token;
+    printf("%s", buf);
+    const char delim[2] =",";
+    token = strtok(buf, delim);
+    char *noise_values =token;
+    printf("%s",noise_values);
+    token = strtok(NULL, delim);
+    char *x =token;
+    printf("%s",x);
+    token = strtok(NULL, delim);
+    char *y =token ;
+    printf("%s",y);
+    token = strtok(NULL, delim);
+    char *region =token;
+    printf("%s",region);
  }
 
 }
