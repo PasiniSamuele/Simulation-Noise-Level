@@ -300,7 +300,7 @@ publish_noise(void) {
 
 static void
 noise_processing() {
-  int r = cfs_read(fd, buf, sizeof(buf));
+  cfs_read(fd, buf, sizeof(buf));
   char *token;
   const char delim[2] =",";
   token = strtok(buf, delim);
