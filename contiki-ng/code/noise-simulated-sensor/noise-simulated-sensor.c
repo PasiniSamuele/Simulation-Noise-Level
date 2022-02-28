@@ -302,13 +302,14 @@ static void
 noise_processing() {
   int r = cfs_read(fd, buf, sizeof(buf));
   char * token;
-  token = strtok(buf, ',');
+  const char delim =",",
+  token = strtok(buf, delim);
   noise_values[position] =token - '0';
-  token = strtok(buf, ',');
+  token = strtok(buf, delim);
   x =token - '0';
-  token = strtok(buf, ',');
+  token = strtok(buf, delim);
   y =token - '0';
-  token = strtok(buf, ',');
+  token = strtok(buf, delim);
   region =token - '0';
   printf("Noise lvl: %d dB\n", noise_values[position]);
 
