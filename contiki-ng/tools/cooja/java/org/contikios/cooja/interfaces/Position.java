@@ -85,6 +85,7 @@ public class Position extends MoteInterface {
     this.setChanged();
     this.notifyObservers(mote);
 
+    // Update position into mote memory
     if (mote != null && mote.getType() instanceof ContikiMoteType) {
       VarMemory memory = new VarMemory(mote.getMemory());
 
