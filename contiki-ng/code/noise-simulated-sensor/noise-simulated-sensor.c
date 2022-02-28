@@ -463,7 +463,7 @@ init_file_reading(void) {
     LOG_INFO("Seek done\n");
     cfs_read(fd, buf, sizeof(message));
     LOG_INFO("READ\n");
-    LOG_INFO("%s", buf);
+    LOG_INFO("%s\n", buf);
  }
 
 }
