@@ -27,7 +27,7 @@ if(file ==NULL){
   	LOG_WARN("File null");
 }*/
 //cfs_close(fd);
-fd = cfs_open("pierpaolo.csv" ,CFS_READ);
+fd = cfs_open(FILENAME ,CFS_READ);
 printf("%d\n", fd);
  if(fd < 0) {
 		printf("Failed to open");
