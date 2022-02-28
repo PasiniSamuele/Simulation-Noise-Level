@@ -988,10 +988,8 @@ cfs_open(const char *name, int flags)
   fdp = &coffee_fd_set[fd];
   fdp->flags = 0;
   fdp->io_flags = 0;
-  LOG_INFO("TEST");
   fdp->file = find_file(name);
   if(fdp->file == NULL) {
-    LOG_INFO("not found");
     if((flags & (CFS_READ | CFS_WRITE)) == CFS_READ) {
       return -1;
     }

@@ -9,6 +9,7 @@
 #include "sys/log.h"
 #include "cfs/cfs.h"
 #include "cfs/cfs-coffee.h"
+#include "cfs/cfs-coffee.c"
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -454,6 +455,10 @@ init_noise_values(void) {
 
 static void
 init_file_reading(void) {
+struct file * file = find_file("asdasfasrbisdfdsbgiusrgt");
+if(file ==NULL){
+  	LOG_WARN("File null");
+}
 cfs_close(fd);
 fd = cfs_open("asdasfasrbisdfdsbgiusrgt" ,CFS_READ);
 LOG_INFO("%d\n", fd);
