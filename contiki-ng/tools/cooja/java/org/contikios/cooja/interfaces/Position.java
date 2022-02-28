@@ -127,6 +127,13 @@ public class Position extends MoteInterface {
   }
 
   /**
+   * @return region 
+   */
+  public double getRegion() {
+    return region;
+  }
+
+  /**
    * Calculates distance from this position to given position.
    *
    * @param pos Compared position
