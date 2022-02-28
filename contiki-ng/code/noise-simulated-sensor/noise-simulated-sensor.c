@@ -481,7 +481,7 @@ PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&mqtt_timer));
     mqtt_state_machine();
   }
-
+  cfs_close(fd);
   printf("Done\n");
 
   PROCESS_END();
