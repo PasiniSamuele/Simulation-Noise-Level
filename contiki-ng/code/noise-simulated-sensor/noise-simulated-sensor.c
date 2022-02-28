@@ -454,6 +454,7 @@ init_noise_values(void) {
 static void
 init_file_reading(void) {
  fd = cfs_open("asdasd" ,CFS_READ);
+LOG_INFO("%d\n", fd);
  if(fd < 0) {
 		LOG_WARN("Failed to open");
  }
