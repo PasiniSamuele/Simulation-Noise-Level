@@ -1,6 +1,4 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.com/product.schema.json",
   "title": "Noise Measure",
   "description": "A noise measure sent by a sensor",
   "type": "object",
