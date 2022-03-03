@@ -266,8 +266,6 @@ publish(char *value, int mode)
     return;
   }
 
-  LOG_INFO("Publishing %s\n", pub_buffer);
-
   mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)pub_buffer,
                len, MQTT_QOS_LEVEL_1, MQTT_RETAIN_OFF);
 
@@ -319,16 +317,13 @@ publish_noise(void) {
 
 static void
 noise_processing() {
+  LOG_INFO("Reading row\n");
   if (cfs_read(fd, buf, sizeof(message)) == 0){
     cfs_seek(fd, 0, CFS_SEEK_SET);
     cfs_read(fd, buf, sizeof(message));
   }
-
-  LOG_INFO("READ\n");
-  LOG_INFO("%s\n", buf);
-
+  
   char *token;
-  LOG_INFO("%s", buf);
   const char delim[2] =",";
 
   token = strtok(buf, delim);
@@ -340,7 +335,7 @@ noise_processing() {
   token = strtok(NULL, delim);
   y = token;
   
-  printf("Noise lvl: %d dB\n", noise_values[position]);
+  LOG_INFO("Read noise lvl: %d dB\n", noise_values[position]);
 
   publish_noise();
   position = (position + 1) % MAX_WINDOW_SIZE;
@@ -399,7 +394,6 @@ mqtt_state_machine()
 
     if(mqtt_ready(&conn) && conn.out_buffer_sent) {
       /* Connected */
-      LOG_INFO("Noise processing\n");
       noise_processing();
       state = STATE_CONNECTED;
       etimer_set(&mqtt_timer, conf.pub_interval);
@@ -475,7 +469,6 @@ init_noise_values(void) {
 static void
 init_file_reading(void) {
   fd = cfs_open(FILENAME, CFS_READ);
-  LOG_INFO("%d\n", fd);
 
   if(fd < 0) {
       LOG_WARN("Failed to open file");
@@ -483,7 +476,7 @@ init_file_reading(void) {
   else {
       LOG_INFO("File opened\n");
       cfs_seek(fd, 0, CFS_SEEK_SET);
-      LOG_INFO("Seek done\n");
+      LOG_INFO("Seek 0 done\n");
   }
 }
 
@@ -503,7 +496,7 @@ PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
   }
 
   cfs_close(fd);
-  printf("Done\n");
+  LOG_INFO("Done\n");
 
   PROCESS_END();
 }
