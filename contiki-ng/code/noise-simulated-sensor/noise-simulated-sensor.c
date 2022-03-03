@@ -166,7 +166,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 static int
 construct_pub_topic(void)
 {
-  int len = snprintf(pub_topic, BUFFER_SIZE, "%s%s", MQTT_PUBLISH_TOPIC, REGION);
+  int len = snprintf(pub_topic, BUFFER_SIZE, "%s%d", MQTT_PUBLISH_TOPIC, REGION);
 
   /* len < 0: Error. Len >= BUFFER_SIZE: Buffer too small */
   if(len < 0 || len >= BUFFER_SIZE) {
