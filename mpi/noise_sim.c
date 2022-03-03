@@ -42,11 +42,13 @@ void print_matrix(int **matrix, int row, int col) {
         }
         printf("\n");
     }
+    printf("\n\n");
 }
 
 void print_array(noise_source *arr, int numel) {
+    printf("(X, Y) = noise dB\n");
     for (size_t i = 0; i < numel; i++) {
-        printf("(%d, %d) ", arr[i].x, arr[i].y);
+        printf("(%d, %d) = %d dB\n", arr[i].x, arr[i].y, arr[i].noise_level);
     }
     printf("\n");
 }
@@ -91,12 +93,12 @@ int read_sim_params(noise_source **ptr_sources) {
 }
 
 int **init_noise_sqm() {
-    int **noise_sqm = calloc(W, 1+sizeof(int*)); // alloc one extra ptr to check later for NULL on freeing
+    int **noise_sqm = calloc(L, 1+sizeof(int*)); // alloc one extra ptr to check later for NULL on freeing
 
-    for(size_t i = 0; i < W; i++) {
-        noise_sqm[i] = calloc(L, sizeof(int));
+    for(size_t i = 0; i < L; i++) {
+        noise_sqm[i] = calloc(W, sizeof(int));
     }
-    noise_sqm[W] = NULL; // set the extra ptr to NULL
+    noise_sqm[L] = NULL; // set the extra ptr to NULL
 
     return noise_sqm;
 }
@@ -117,34 +119,38 @@ int sum_noises(int noise1, int noise2) {
 int **compute_noise_sqm(noise_source *sources, int num_elem) {
     int **noise_sqm = init_noise_sqm();
 
+    print_matrix(noise_sqm, L, W);
+
     for (size_t i = 0; i < num_elem; i++) {
 
         int x = sources[i].x;
         int y = sources[i].y;
 
-        noise_sqm[x][y] = sum_noises(noise_sqm[x][y], sources[i].noise_level);
+        noise_sqm[y][x] = sum_noises(noise_sqm[y][x], sources[i].noise_level);
 
-        for (size_t j = 0; j < sources[i].distance_affected; j++) {
+        /* for (size_t j = 0; j < sources[i].distance_affected; j++) {
 
             for (size_t k = 0; k < sources[i].distance_affected; k++) {
                 if (x+j < L && y+k < W) {
-                    noise_sqm[x+j][y+k] = sum_noises(noise_sqm[x+j][y+k], sources[i].noise_level);
+                    noise_sqm[y+k][x+j] = sum_noises(noise_sqm[y+k][x+j], sources[i].noise_level);
                 }
 
                 if (x-j >= 0 && y+k < W) {
-                    noise_sqm[x-j][y+k] = sum_noises(noise_sqm[x-j][y+k], sources[i].noise_level);
+                    noise_sqm[y+k][x-j] = sum_noises(noise_sqm[y+k][x-j], sources[i].noise_level);
                 }
 
                 if (x+j < L && y-k >= 0) {
-                    noise_sqm[x+j][y-k] = sum_noises(noise_sqm[x+j][y-k], sources[i].noise_level);
+                    noise_sqm[y-k][x+j] = sum_noises(noise_sqm[y-k][x+j], sources[i].noise_level);
                 }
 
                 if (x-j >= 0 && y-k >= 0) {
-                    noise_sqm[x-j][y-k] = sum_noises(noise_sqm[x-j][y-k], sources[i].noise_level);
+                    noise_sqm[y-k][x-j] = sum_noises(noise_sqm[y-k][x-j], sources[i].noise_level);
                 }     
             }
-        }
+        } */
     }
+
+    print_matrix(noise_sqm, L, W);
 
     return noise_sqm;
 }
@@ -261,9 +267,8 @@ int main(int argc, char** argv) {
     if (my_rank == 0) {
         num_elem_per_proc = read_sim_params(&global_arr) / world_size;
     }
-    MPI_Bcast(&num_elem_per_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    printf("my_rank: %d, num_elem_per_proc: %d\n", my_rank, num_elem_per_proc);
 
+    MPI_Bcast(&num_elem_per_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     // For each process, create a receive buffer
     noise_source *local_arr = malloc(sizeof(noise_source) * num_elem_per_proc);
@@ -273,10 +278,14 @@ int main(int argc, char** argv) {
     // Scatter the random numbers from process 0 to all processes
     MPI_Scatter(global_arr, num_elem_per_proc, mpi_noise_source, local_arr, num_elem_per_proc, mpi_noise_source, 0, MPI_COMM_WORLD);
 
+    print_array(local_arr, num_elem_per_proc);
+
     
     while(1) {
+        
         // Compute the noise for each square meter in the region (W x L)
         int **noise_sqm = compute_noise_sqm(local_arr, num_elem_per_proc);
+        
 
         int count = 0;
         noise_data *my_noises = malloc(sizeof(noise_data) * noises_per_proc);
