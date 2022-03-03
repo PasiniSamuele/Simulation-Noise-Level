@@ -3,18 +3,22 @@
 #include <stddef.h>
 #include <time.h>
 #include <mpi.h>
+#include <math.h>
+#include <unistd.h>
 
-#define P 100000
-#define V 50000
-#define W 10000
-#define L 10000
+#define P 2
+#define V 2
+#define W 5
+#define L 5
 #define Np 40
 #define Nv 80
-#define Dp 5
-#define Dv 20
-#define Vp 2
-#define Vv 40
-#define t 10
+#define Dp 1
+#define Dv 1
+#define Vp 1
+#define Vv 1
+#define t 5
+
+#define DEBUG 1
 
 typedef struct noise_source_t {
     int noise_level;
@@ -31,9 +35,27 @@ typedef struct noise_data_t {
 } noise_data;
 
 
-noise_source *read_sim_params() {
-    noise_source *sources = malloc((P+V) * sizeof(noise_source));
-    
+void print_matrix(int **matrix, int row, int col) {
+    for (size_t i = 0; i < row; i++) {
+        for (size_t j = 0; j < col; j++) {
+            printf("%d ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+void print_array(noise_source *arr, int numel) {
+    for (size_t i = 0; i < numel; i++) {
+        printf("(%d, %d) ", arr[i].x, arr[i].y);
+    }
+    printf("\n");
+}
+
+
+int read_sim_params(noise_source **ptr_sources) {
+    *ptr_sources = malloc((P+V) * sizeof(noise_source));
+    noise_source *sources = *ptr_sources;
+        
     // Noise sources for people
     for (size_t i = 0; i < P; i++) {
         // Compute random number between 0 and L for coord X
@@ -63,8 +85,9 @@ noise_source *read_sim_params() {
         sources[i].distance_affected = Dv;
         sources[i].moving_speed = Vv;
     }
-
-    return sources;
+    printf("\nPIPPO\n");
+    
+    return V+P; // total number of elements added into sources
 }
 
 int **init_noise_sqm() {
@@ -104,15 +127,15 @@ int **compute_noise_sqm(noise_source *sources, int num_elem) {
         for (size_t j = 0; j < sources[i].distance_affected; j++) {
 
             for (size_t k = 0; k < sources[i].distance_affected; k++) {
-                if (x+j < W && y+k < L) {
+                if (x+j < L && y+k < W) {
                     noise_sqm[x+j][y+k] = sum_noises(noise_sqm[x+j][y+k], sources[i].noise_level);
                 }
 
-                if (x-j >= 0 && y+k < L) {
+                if (x-j >= 0 && y+k < W) {
                     noise_sqm[x-j][y+k] = sum_noises(noise_sqm[x-j][y+k], sources[i].noise_level);
                 }
 
-                if (x+j < W && y-k >= 0) {
+                if (x+j < L && y-k >= 0) {
                     noise_sqm[x+j][y-k] = sum_noises(noise_sqm[x+j][y-k], sources[i].noise_level);
                 }
 
@@ -123,8 +146,61 @@ int **compute_noise_sqm(noise_source *sources, int num_elem) {
         }
     }
 
-    return **noise_sqm;
+    return noise_sqm;
 }
+
+void move_noise_sources(noise_source *sources, int num_elem) {
+    for (size_t i = 0; i < num_elem; i++) {
+
+        int delta_x = sources[i].moving_speed * (rand() % 3 - 1); // Possible values of (rand() % 3 - 1) are -1, 0, 1
+        int delta_y = sources[i].moving_speed * (rand() % 3 - 1);
+
+        if (sources[i].x + delta_x >= L || sources[i].x + delta_x < 0 ) {
+            delta_x = -delta_x;
+        }
+
+        if (sources[i].y + delta_y >= W || sources[i].y + delta_y < 0 ) {
+            delta_y = -delta_y;
+        }
+
+        sources[i].x += delta_x;
+        sources[i].y += delta_y;
+    }
+}
+
+/* void init_struct_noise_source(MPI_Datatype *mpi_noise_source) {
+    // Struct noise_source
+    int struct_len = 5;
+    int block_lens[] = { 1, 1, 1, 1, 1 };
+    MPI_Aint displacements[] = { 
+        offsetof(noise_source, noise_level),
+        offsetof(noise_source, distance_affected),
+        offsetof(noise_source, moving_speed),
+        offsetof(noise_source, x),
+        offsetof(noise_source, y)
+    };
+    MPI_Datatype types[] = { MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT };
+
+    // Create and commit the data structure
+    MPI_Type_create_struct(struct_len, block_lens, displacements, types, mpi_noise_source);
+    MPI_Type_commit(mpi_noise_source);
+}
+
+void init_struct_noise_data(MPI_Datatype *mpi_noise_data) {
+    // Struct noise_data
+    int struct_len = 3;
+    int block_lens[] = { 1, 1, 1 };
+    MPI_Aint displacements[] = { 
+        offsetof(noise_data, noise_level),
+        offsetof(noise_data, x),
+        offsetof(noise_data, y)
+    };
+    MPI_Datatype types[] = { MPI_INT, MPI_INT, MPI_INT };
+
+    // Create and commit the data structure
+    MPI_Type_create_struct(struct_len, block_lens, displacements, types, mpi_noise_data);
+    MPI_Type_commit(mpi_noise_data);
+} */
 
 
 int main(int argc, char** argv) {
@@ -132,8 +208,14 @@ int main(int argc, char** argv) {
     srand(time(NULL));
 
     MPI_Init(NULL, NULL);
-
+ 
+    MPI_Datatype mpi_noise_data;
     MPI_Datatype mpi_noise_source;
+    /*
+    init_struct_noise_source(&mpi_noise_data);
+    init_struct_noise_data(&mpi_noise_source); */
+
+    // Struct noise_source
     int struct_len = 5;
     int block_lens[] = { 1, 1, 1, 1, 1 };
     MPI_Aint displacements[] = { 
@@ -149,22 +231,22 @@ int main(int argc, char** argv) {
     MPI_Type_create_struct(struct_len, block_lens, displacements, types, &mpi_noise_source);
     MPI_Type_commit(&mpi_noise_source);
 
-
-
-    // Struct noise_data
-    MPI_Datatype mpi_noise_data;
-    int struct_len = 3;
-    int block_lens[] = { 1, 1, 1 };
-    MPI_Aint displacements[] = { 
+        // Struct noise_data
+    int struct_len2 = 3;
+    int block_lens2[] = { 1, 1, 1 };
+    MPI_Aint displacements2[] = { 
         offsetof(noise_data, noise_level),
         offsetof(noise_data, x),
         offsetof(noise_data, y)
     };
-    MPI_Datatype types[] = { MPI_INT, MPI_INT, MPI_INT };
+    MPI_Datatype types2[] = { MPI_INT, MPI_INT, MPI_INT };
 
     // Create and commit the data structure
-    MPI_Type_create_struct(struct_len, block_lens, displacements, types, &mpi_noise_data);
+    MPI_Type_create_struct(struct_len2, block_lens2, displacements2, types2, &mpi_noise_data);
     MPI_Type_commit(&mpi_noise_data);
+
+
+
 
 
 
@@ -174,45 +256,51 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
     // Process 0 creates the array
-    noise_source *global_arr = NULL;
+    noise_source *global_arr = NULL;    
     int num_elem_per_proc = 0;
     if (my_rank == 0) {
-        global_arr = read_sim_params();
-        num_elem_per_proc = sizeof(global_arr) / sizeof(global_arr[0]);
+        num_elem_per_proc = read_sim_params(&global_arr) / world_size;
     }
+    MPI_Bcast(&num_elem_per_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    printf("my_rank: %d, num_elem_per_proc: %d\n", my_rank, num_elem_per_proc);
+
 
     // For each process, create a receive buffer
     noise_source *local_arr = malloc(sizeof(noise_source) * num_elem_per_proc);
 
+    int noises_per_proc = W * L / world_size;
+
     // Scatter the random numbers from process 0 to all processes
     MPI_Scatter(global_arr, num_elem_per_proc, mpi_noise_source, local_arr, num_elem_per_proc, mpi_noise_source, 0, MPI_COMM_WORLD);
 
+    
     while(1) {
         // Compute the noise for each square meter in the region (W x L)
-        int noise_sqm[W][L] = compute_noise_sqm(local_arr, num_elem_per_proc);
+        int **noise_sqm = compute_noise_sqm(local_arr, num_elem_per_proc);
 
+        int count = 0;
+        noise_data *my_noises = malloc(sizeof(noise_data) * noises_per_proc);
 
         // Shuffle
         // Sending and receiving noises
         MPI_Request req;
-        for (size_t i = 0; i < W; i++) {
-            for (size_t j = 0; j < L; j++) {
-                int receiver = (i*L + j) % world_size;
+        for (size_t i = 0; i < L; i++) {
+            for (size_t j = 0; j < W; j++) {
+                int receiver = (i*W + j) % world_size;
                 // I am the receiver
                 if (receiver == my_rank) {
 
-                    noise_data *my_noise = malloc(sizeof(noise_data));
-
-                    my_noise.noise_level = noise_sqm[i][j];
-                    my_noise.x = i;
-                    my_noise.y = j;
+                    my_noises[count].noise_level = noise_sqm[i][j];
+                    my_noises[count].x = i;
+                    my_noises[count].y = j;
 
                     // I receive one message from any other process
                     for (int p = 0; p < world_size-1; p++) {
                         int rec_buffer;
                         MPI_Recv(&rec_buffer, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                        my_noise.noise_level = sum_noise(my_noise.noise_level, rec_buffer);
+                        my_noises[count].noise_level = sum_noises(my_noises[count].noise_level, rec_buffer);
                     }
+                    count++;
                 }
                 // I am a sender: I can send asynchronously
                 else {
@@ -223,30 +311,32 @@ int main(int argc, char** argv) {
 
 
         // Gather all partial results in process 0
-        float *gather_buffer = NULL;
+        noise_data *gather_buffer = NULL;
         if (my_rank == 0) {
-            gather_buffer = (float *) malloc(sizeof(float) * world_size);
+            gather_buffer = malloc(sizeof(noise_data) * world_size * noises_per_proc);
         }
-        MPI_Gather(&local_average, 1, MPI_FLOAT, gather_buffer, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        MPI_Gather(&my_noises, noises_per_proc, mpi_noise_data, gather_buffer, noises_per_proc, mpi_noise_data, 0, MPI_COMM_WORLD);
+
+
+        // Print
+        if (my_rank == 0) {
+            for (size_t i = 0; i < world_size * noises_per_proc; i++) {
+                printf("Noise in cell (%d, %d) is %d dB\n", gather_buffer[i].x, gather_buffer[i].y, gather_buffer[i].noise_level);
+            }
+        }
+
+        move_noise_sources(local_arr, num_elem_per_proc);
 
         sleep(t);
     }
 
-    // Compute the final average in process 0
-    if (my_rank == 0) {
-        float result = compute_final_average(gather_buffer, world_size);
-        printf("The average is %f\n", result);
 
-        // Sequential code to check correctness
-        float sequential_result = compute_average(global_arr, num_elements_per_proc * world_size);
-        printf("The average (sequential computation) is %f\n", sequential_result);
-    }
+
+/*
 
 
 
-
-
-
+    // TODO FREEEEEEE
 
     // Clean up
     if (my_rank == 0) {
@@ -254,6 +344,7 @@ int main(int argc, char** argv) {
         //free(gather_buffer);
     }
     //free(local_arr);
+    */
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
