@@ -110,7 +110,7 @@
         "id": "4c9c3a7c16e94b6a",
         "type": "change",
         "z": "f6f2187d.f17ca8",
-        "name": "Set Json Schema",
+        "name": "Set JSON Schema",
         "rules": [
             {
                 "t": "set",
@@ -164,7 +164,7 @@
         "id": "7668411942481fd6",
         "type": "json-multi-schema-validator",
         "z": "f6f2187d.f17ca8",
-        "name": "Json Validator",
+        "name": "JSON Validator",
         "x": 1140,
         "y": 480,
         "wires": [
