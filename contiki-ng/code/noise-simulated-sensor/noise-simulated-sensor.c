@@ -1,6 +1,7 @@
 #include "contiki.h"
 #include "mqtt.h"
 #include "rpl.h"
+#include "dev/position_intf.h"
 #include "dev/cooja-radio.h"
 #include "net/ipv6/uip.h"
 #include "net/ipv6/sicslowpan.h"
@@ -22,7 +23,7 @@
 #define PARSE_BUFFER_SIZE 15
 #define RPL_CHANNEL 26
 
-#define FILENAME "test1.csv"
+#define FILENAME "dataset.csv"
 
 static uint16_t noise_values[MAX_WINDOW_SIZE];
 static uint16_t position;
@@ -31,10 +32,9 @@ static struct etimer mqtt_timer;
 
 static int32_t fd;
 static char buf[64];
-static char message[17];
+static char message[15];
 static char* x;
 static char* y;
-static char* region;
 
 /*---------------------------------------------------------------------------*/
 #define PUBLISH_MODE_RAW 0
@@ -166,7 +166,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 static int
 construct_pub_topic(void)
 {
-  int len = snprintf(pub_topic, BUFFER_SIZE, MQTT_PUBLISH_TOPIC);
+  int len = snprintf(pub_topic, BUFFER_SIZE, "%s%s", MQTT_PUBLISH_TOPIC, REGION);
 
   /* len < 0: Error. Len >= BUFFER_SIZE: Buffer too small */
   if(len < 0 || len >= BUFFER_SIZE) {
@@ -257,8 +257,9 @@ publish(char *value, int mode)
       strcpy(mode_str, "unknown");
   }
 
-  region[strlen(region)-1] = '\0';  //remove last \n
-  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, "{\"noise\": %s, \"mode\": \"%s\", \"coordX\": %s, \"coordY\": %s, \"region\": %s}", value,mode_str, x, y , region);
+  int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, 
+        "{\"noise\": %s, \"mode\": \"%s\", \"coordX\": %s, \"coordY\": %s}",
+        value, mode_str, x, y);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
@@ -318,24 +319,27 @@ publish_noise(void) {
 
 static void
 noise_processing() {
- 
-  if(cfs_read(fd, buf, sizeof(message))==0){
+  if (cfs_read(fd, buf, sizeof(message)) == 0){
     cfs_seek(fd, 0, CFS_SEEK_SET);
     cfs_read(fd, buf, sizeof(message));
   }
+
   LOG_INFO("READ\n");
   LOG_INFO("%s\n", buf);
+
   char *token;
   LOG_INFO("%s", buf);
   const char delim[2] =",";
+
   token = strtok(buf, delim);
-  noise_values[position] =atoi(token);
+  noise_values[position] = atoi(token);
+
   token = strtok(NULL, delim);
-  x =token;
+  x = token;
+
   token = strtok(NULL, delim);
-  y =token ;
-  token = strtok(NULL, delim);
-  region =token;
+  y = token;
+  
   printf("Noise lvl: %d dB\n", noise_values[position]);
 
   publish_noise();
@@ -394,10 +398,11 @@ mqtt_state_machine()
     }
 
     if(mqtt_ready(&conn) && conn.out_buffer_sent) {
-      /* Connected; sampling */
-      LOG_INFO("Noise sampling started\n");
-      state = STATE_SAMPLING;
-      etimer_set(&mqtt_timer, 0.1 * CLOCK_SECOND);
+      /* Connected */
+      LOG_INFO("Noise processing\n");
+      noise_processing();
+      state = STATE_CONNECTED;
+      etimer_set(&mqtt_timer, conf.pub_interval);
       /* Return here so we don't end up rescheduling the timer */
       return;
     } else {
@@ -414,11 +419,6 @@ mqtt_state_machine()
           conn.out_queue_full);
     }
     break;
-  case STATE_SAMPLING:
-    noise_processing();
-    state = STATE_CONNECTED;
-    etimer_set(&mqtt_timer, conf.pub_interval);
-    return;
   case STATE_DISCONNECTED:
     LOG_INFO("Disconnected\n");
     if(connect_attempt < RECONNECT_ATTEMPTS ||
@@ -474,22 +474,17 @@ init_noise_values(void) {
 
 static void
 init_file_reading(void) {
-/*struct file * file = find_file("asdasfasrbisdfdsbgiusrgt");
-if(file ==NULL){
-  	LOG_WARN("File null");
-}*/
-//cfs_close(fd);
-fd = cfs_open(FILENAME ,CFS_READ);
-LOG_INFO("%d\n", fd);
- if(fd < 0) {
-		LOG_WARN("Failed to open");
- }
- else{
-    LOG_INFO("File opened\n");
-    cfs_seek(fd, 0, CFS_SEEK_SET);
-    LOG_INFO("Seek done\n");
- }
+  fd = cfs_open(FILENAME, CFS_READ);
+  LOG_INFO("%d\n", fd);
 
+  if(fd < 0) {
+      LOG_WARN("Failed to open file");
+  }
+  else {
+      LOG_INFO("File opened\n");
+      cfs_seek(fd, 0, CFS_SEEK_SET);
+      LOG_INFO("Seek done\n");
+  }
 }
 
 PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
@@ -506,6 +501,7 @@ PROCESS_THREAD(noise_simulated_sensor_process, ev, data)
     PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&mqtt_timer));
     mqtt_state_machine();
   }
+
   cfs_close(fd);
   printf("Done\n");
 
