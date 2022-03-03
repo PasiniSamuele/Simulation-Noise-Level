@@ -12,7 +12,7 @@
 /*---------------------------------------------------------------------------*/
 /* User configuration */
 /*---------------------------------------------------------------------------*/
-#define MQTT_PUBLISH_TOPIC  "simulated-noise"
+#define MQTT_PUBLISH_TOPIC  "noise/region"
 #define MQTT_BROKER_IP_ADDR "fd00::1"
 //*---------------------------------------------------------------------------*/
 #define IEEE802154_CONF_DEFAULT_CHANNEL      21

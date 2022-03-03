@@ -11,7 +11,7 @@
         "type": "mqtt in",
         "z": "f6f2187d.f17ca8",
         "name": "",
-        "topic": "noise",
+        "topic": "noise/#",
         "qos": "2",
         "datatype": "json",
         "broker": "a6dc2e72f2b21fa9",
@@ -23,7 +23,7 @@
         "y": 480,
         "wires": [
             [
-                "4c9c3a7c16e94b6a"
+                "8301894363428aaf"
             ]
         ]
     },
@@ -35,7 +35,7 @@
         "scope": null,
         "uncaught": false,
         "x": 400,
-        "y": 560,
+        "y": 160,
         "wires": [
             [
                 "e104f6bb0276b869"
@@ -46,17 +46,17 @@
         "id": "e104f6bb0276b869",
         "type": "debug",
         "z": "f6f2187d.f17ca8",
-        "name": "",
+        "name": "Error",
         "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "true",
-        "targetType": "full",
+        "complete": "error",
+        "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
         "x": 550,
-        "y": 560,
+        "y": 160,
         "wires": []
     },
     {
@@ -83,7 +83,7 @@
         "name": "",
         "statusCode": "",
         "headers": {},
-        "x": 1190,
+        "x": 1170,
         "y": 320,
         "wires": []
     },
@@ -125,7 +125,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 590,
+        "x": 930,
         "y": 480,
         "wires": [
             [
@@ -165,57 +165,13 @@
         "type": "json-multi-schema-validator",
         "z": "f6f2187d.f17ca8",
         "name": "Json Validator",
-        "x": 820,
+        "x": 1140,
         "y": 480,
         "wires": [
             [
-                "02f9e600c6430658"
+                "e700439570c0bda4"
             ]
         ]
-    },
-    {
-        "id": "02f9e600c6430658",
-        "type": "switch",
-        "z": "f6f2187d.f17ca8",
-        "name": "Check Validation Result",
-        "property": "error",
-        "propertyType": "msg",
-        "rules": [
-            {
-                "t": "else"
-            },
-            {
-                "t": "false"
-            }
-        ],
-        "checkall": "true",
-        "repair": false,
-        "outputs": 2,
-        "x": 1070,
-        "y": 480,
-        "wires": [
-            [
-                "64f8d684e99b7ea8"
-            ],
-            []
-        ]
-    },
-    {
-        "id": "64f8d684e99b7ea8",
-        "type": "debug",
-        "z": "f6f2187d.f17ca8",
-        "name": "Sink invalid measures",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1340,
-        "y": 440,
-        "wires": []
     },
     {
         "id": "ee32e84361b6ecbd",
@@ -231,10 +187,297 @@
         "id": "f8bf5f409c29f7e4",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
-        "name": "Reading MQTT measures",
+        "name": "Reading, validating and storing measures from MQTT",
         "info": "",
-        "x": 450,
+        "x": 540,
         "y": 420,
+        "wires": []
+    },
+    {
+        "id": "8301894363428aaf",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Set region",
+        "rules": [
+            {
+                "t": "set",
+                "p": "region",
+                "pt": "msg",
+                "to": "$number($match(topic, /noise\\/region(\\d+)$/).groups[0])",
+                "tot": "jsonata"
+            },
+            {
+                "t": "delete",
+                "p": "qos",
+                "pt": "msg"
+            },
+            {
+                "t": "delete",
+                "p": "retain",
+                "pt": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 550,
+        "y": 480,
+        "wires": [
+            [
+                "dfd664982dfb26d5"
+            ]
+        ]
+    },
+    {
+        "id": "dfd664982dfb26d5",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Check region",
+        "func": "if (msg.topic == null || msg.region == null) {\n    node.error(\"Invalid MQTT Topic\", msg);\n} else {\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 730,
+        "y": 480,
+        "wires": [
+            [
+                "4c9c3a7c16e94b6a"
+            ]
+        ]
+    },
+    {
+        "id": "e700439570c0bda4",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Check JSON schema validation result",
+        "func": "if (msg.error) {\n    node.error(\"Invalid JSON object\", msg);\n} else {\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 580,
+        "wires": [
+            [
+                "9eaebe999303fd1d"
+            ]
+        ]
+    },
+    {
+        "id": "da3499d9781014eb",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "Error catching",
+        "info": "",
+        "x": 410,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "7ef5e23e96835592",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "57d039c00858e3f2",
+        "name": "",
+        "x": 1150,
+        "y": 580,
+        "wires": [
+            [
+                "b90ca2e46ba74822"
+            ]
+        ]
+    },
+    {
+        "id": "9eaebe999303fd1d",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Preparing Distance Query and Saving Properties",
+        "rules": [
+            {
+                "t": "delete",
+                "p": "error",
+                "pt": "msg"
+            },
+            {
+                "t": "delete",
+                "p": "validUrl",
+                "pt": "msg"
+            },
+            {
+                "t": "set",
+                "p": "noise",
+                "pt": "msg",
+                "to": "(payload.mode = \"avg\" ? [payload.noise] : payload.noise)",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "coordY",
+                "pt": "msg",
+                "to": "payload.coordY",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "coordX",
+                "pt": "msg",
+                "to": "payload.coordX",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[coordX, coordY, region]",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "SELECT id, ROUND(SQRT(POW(coord_x - ?, 2) + POW(coord_y - ?, 2)), 4) AS distance  FROM point_of_interest  WHERE region = ? ORDER BY distance LIMIT 1;",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 860,
+        "y": 580,
+        "wires": [
+            [
+                "7ef5e23e96835592"
+            ]
+        ]
+    },
+    {
+        "id": "b90ca2e46ba74822",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Prepare for noise array split",
+        "rules": [
+            {
+                "t": "set",
+                "p": "nearestPoint",
+                "pt": "msg",
+                "to": "payload[0] != null ? payload[0].id : null",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "noise",
+                "tot": "msg"
+            },
+            {
+                "t": "delete",
+                "p": "noise",
+                "pt": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 460,
+        "y": 680,
+        "wires": [
+            [
+                "d85f4b25ecee2e0f"
+            ]
+        ]
+    },
+    {
+        "id": "d85f4b25ecee2e0f",
+        "type": "split",
+        "z": "f6f2187d.f17ca8",
+        "name": "Noise split",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 690,
+        "y": 680,
+        "wires": [
+            [
+                "e47d5bea0a9d9a1b"
+            ]
+        ]
+    },
+    {
+        "id": "e47d5bea0a9d9a1b",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Preparing for insert",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[payload, coordX, coordY, region, nearestPoint]",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "INSERT INTO noise_measure VALUES (NULL, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP);",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 890,
+        "y": 680,
+        "wires": [
+            [
+                "51818a8620e27c54"
+            ]
+        ]
+    },
+    {
+        "id": "51818a8620e27c54",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "57d039c00858e3f2",
+        "name": "",
+        "x": 1090,
+        "y": 680,
+        "wires": [
+            [
+                "c7dd97140c5de899"
+            ]
+        ]
+    },
+    {
+        "id": "c7dd97140c5de899",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "Done",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "\"Noise measure inserted\"",
+        "targetType": "jsonata",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1250,
+        "y": 680,
         "wires": []
     },
     {
@@ -262,5 +505,15 @@
         "willPayload": "",
         "willMsg": {},
         "sessionExpiry": ""
+    },
+    {
+        "id": "57d039c00858e3f2",
+        "type": "MySQLdatabase",
+        "name": "",
+        "host": "172.17.0.2",
+        "port": "3306",
+        "db": "noise_level",
+        "tz": "",
+        "charset": "UTF8"
     }
 ]

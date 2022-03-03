@@ -157,7 +157,7 @@ mqtt_event(struct mqtt_connection *m, mqtt_event_t event, void *data)
 static int
 construct_pub_topic(void)
 {
-  int len = snprintf(pub_topic, BUFFER_SIZE, MQTT_PUBLISH_TOPIC);
+  int len = snprintf(pub_topic, BUFFER_SIZE, "%s%d", MQTT_PUBLISH_TOPIC, REGION);
 
   /* len < 0: Error. Len >= BUFFER_SIZE: Buffer too small */
   if(len < 0 || len >= BUFFER_SIZE) {
@@ -249,15 +249,13 @@ publish(char *value, int mode)
   }
 
   int len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, 
-        "{\"noise\": %s, \"mode\": \"%s\",  \"coordX\": %.2f, \"coordY\": %.2f, \"region\": %d}", 
-        value, mode_str, X, Y , REGION);
+        "{\"noise\": %s, \"mode\": \"%s\", \"coordX\": %.2f, \"coordY\": %.2f}", 
+        value, mode_str, X, Y);
 
   if(len < 0 || len >= PUBLISH_BUFFER_SIZE) {
     LOG_ERR("Buffer too short. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
     return;
   }
-
-  LOG_INFO("Publishing %s\n", pub_buffer);
 
   mqtt_publish(&conn, NULL, pub_topic, (uint8_t *)pub_buffer,
                len, MQTT_QOS_LEVEL_1, MQTT_RETAIN_OFF);
@@ -315,7 +313,7 @@ noise_processing() {
   radio_set_channel(RPL_CHANNEL);
   
   noise_values[position] = rssi_value + 110;
-  printf("Noise lvl: %d dB\n", noise_values[position]);
+  LOG_INFO("Noise lvl: %d dB\n", noise_values[position]);
 
   publish_noise();
   position = (position + 1) % MAX_WINDOW_SIZE;
@@ -467,7 +465,7 @@ PROCESS_THREAD(noise_sensor_process, ev, data)
     mqtt_state_machine();
   }
 
-  printf("Done\n");
+  LOG_INFO("Done\n");
 
   PROCESS_END();
 }
