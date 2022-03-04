@@ -59,6 +59,20 @@ void print_matrix_file(int **matrix, int max_x, int max_y) {
     fclose(fp);
 }
 
+void print_counts_and_displs(int world_size, int *counts, int *displs) {
+    printf("Counts: [");
+    for (int i = 0; i < world_size; i++) {
+        printf("%d, ", counts[i]);
+    }
+    printf("]\n");
+
+    printf("Displs: [");
+    for (int i = 0; i < world_size; i++) {
+        printf("%d, ", displs[i]);
+    }
+    printf("]\n");
+}
+
 void print_array(noise_source *arr, int numel) {
     printf("(X, Y) = noise dB\n");
     for (int i = 0; i < numel; i++) {
@@ -80,8 +94,10 @@ int read_sim_params(noise_source **ptr_sources) {
         // Compute random number between 0 and MAX_Y for coord Y
         int y = rand() % MAX_Y;
 
-        sources[i].x = x;
-        sources[i].y = y;
+        //sources[i].x = x;
+        //sources[i].y = y;
+        sources[i].x = 4;
+        sources[i].y = 4;
         sources[i].noise_level = Np;
         sources[i].distance_affected = Dp;
         sources[i].moving_speed = Vp;
@@ -95,8 +111,10 @@ int read_sim_params(noise_source **ptr_sources) {
         // Compute random number between 0 and MAX_Y for coord Y
         int y = rand() % MAX_Y;
 
-        sources[i].x = x;
-        sources[i].y = y;
+        //sources[i].x = x;
+        //sources[i].y = y;
+        sources[i].x = 4;
+        sources[i].y = 4;
         sources[i].noise_level = Nv;
         sources[i].distance_affected = Dv;
         sources[i].moving_speed = Vv;
@@ -300,44 +318,52 @@ int main(int argc, char** argv) {
     } 
     MPI_Bcast(&num_elem_per_proc, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-    int num_elem_send_count[world_size];
+    // Element to be sent for each process
+    int elem_send_count[world_size];
+    // Array displacement of each process
+    int elem_displs[world_size];
 
-    int remaining_elem = (P + V) % world_size;
-    
+    int elem_res = (P + V) % world_size;
+    int elem_inc = 0;
+
     for (int i = 0; i < world_size; i++) {
-        num_elem_send_count[i] = num_elem_per_proc;
-        
-        // Partitioning remaining elements from non-integer division.
-        if (remaining_elem > 0) {
-            num_elem_send_count[i]++;
-        }
+        elem_displs[i] = elem_inc;
+        elem_send_count[i] = (i + 1 <= elem_res) ? num_elem_per_proc + 1 : num_elem_per_proc;
+        elem_inc += elem_send_count[i];
     }
 
     // For each process, create a receive buffer
-    noise_source *local_arr = malloc(sizeof(noise_source) * num_elem_per_proc);
+    int elem_size = elem_send_count[my_rank];
+    noise_source *local_arr = malloc(sizeof(noise_source) * elem_size);
 
     int noises_per_proc = MAX_Y * MAX_X / world_size;
-    int noises_send_count[world_size];
+    int noises_recv_count[world_size];
+    int noises_displs[world_size];
 
-    int remaining_noises = (MAX_X * MAX_Y) % world_size;
+    int noises_res = (MAX_X * MAX_Y) % world_size;
+    int noises_inc = 0;
 
     for (int i = 0; i < world_size; i++) {
-        noises_send_count[i] = noises_per_proc;
-
-        // Partitioning remaining noises from non-integer division.
-        if (remaining_noises > 0) {
-            noises_send_count[i]++;
-        }
+        noises_displs[i] = noises_inc;
+        noises_recv_count[i] = (i + 1 <= noises_res) ? noises_per_proc + 1 : noises_per_proc;
+        noises_inc += noises_recv_count[i];
     }
 
+    int noise_size = noises_recv_count[my_rank];
+    noise_data *my_noises = malloc(sizeof(noise_data) * noise_size);
+
+    /* if(!my_rank) {
+        printf("-- Elem send --\n");
+        print_counts_and_displs(world_size, elem_send_count, elem_displs);
+
+        printf("-- Noise recv --\n");
+        print_counts_and_displs(world_size, noises_recv_count, noises_displs);
+    }*/
+
     // Scatter the random numbers from process 0 to all processes
-    MPI_Scatterv(global_arr, num_elem_send_count, mpi_noise_source, local_arr, num_elem_send_count, mpi_noise_source, 0, MPI_COMM_WORLD);
-
-    //print_array(local_arr, num_elem_per_proc);
-
+    MPI_Scatterv(global_arr, elem_send_count, elem_displs, mpi_noise_source, local_arr, elem_size, mpi_noise_source, 0, MPI_COMM_WORLD);
     
     while(1) {
-        
         // Compute the noise for each square meter in the region (MAX_Y x MAX_X)
         int **noise_sqm = compute_noise_sqm(local_arr, num_elem_per_proc);
 
@@ -350,17 +376,15 @@ int main(int argc, char** argv) {
         if (my_rank != 0) {
             print_matrix(noise_sqm, MAX_Y, MAX_X);
         }
-
-
+        
         int count = 0;
-        noise_data *my_noises = malloc(sizeof(noise_data) * noises_per_proc);
 
         // Shuffle
         // Sending and receiving noises
         MPI_Request req;
         for (int i = 0; i < MAX_Y; i++) {
             for (int j = 0; j < MAX_X; j++) {
-                int receiver = (i*MAX_X + j) % world_size;
+                int receiver = (i * MAX_X + j) % world_size;
                 // I am the receiver
                 if (receiver == my_rank) {
 
@@ -389,26 +413,25 @@ int main(int argc, char** argv) {
         // Gather all partial results in process 0
         noise_data *gather_buffer = NULL;
         if (my_rank == 0) {
-            gather_buffer = malloc(sizeof(noise_data) * world_size * noises_per_proc));
+            gather_buffer = malloc(sizeof(noise_data) * world_size * noises_per_proc);
         }
-        MPI_Gather(my_noises, noises_per_proc, mpi_noise_data, gather_buffer, noises_per_proc, mpi_noise_data, 0, MPI_COMM_WORLD);
 
-
+        MPI_Gatherv(my_noises, noise_size, mpi_noise_data, gather_buffer, noises_recv_count, noises_displs, mpi_noise_data, 0, MPI_COMM_WORLD);
 
         // Print
         if (my_rank == 0) {
-            for (int i = 0; i < noises_per_proc * world_size; i++) {
+            /*for (int i = 0; i < noises_per_proc * world_size; i++) {
                 printf("(x, y) = noise_level: (%d, %d) = %d\n", gather_buffer[i].x, gather_buffer[i].y, gather_buffer[i].noise_level);
-            }
+            }*/
 
-            /*int **matrix = init_noise_sqm();
+            int **matrix = init_noise_sqm();
 
-            for (int i = 0; i < noises_per_proc * world_size; i++) {
+            for (int i = 0; i <  MAX_X * MAX_Y; i++) {
                 matrix[gather_buffer[i].y][gather_buffer[i].x] = gather_buffer[i].noise_level;
             }
 
             print_matrix(matrix, MAX_X, MAX_Y);
-            print_matrix_file(matrix, MAX_X, MAX_Y);*/
+            //print_matrix_file(matrix, MAX_X, MAX_Y);
         }
 
         move_noise_sources(local_arr, num_elem_per_proc);
