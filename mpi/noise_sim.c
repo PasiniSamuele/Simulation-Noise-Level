@@ -94,10 +94,8 @@ int read_sim_params(noise_source **ptr_sources) {
         // Compute random number between 0 and MAX_Y for coord Y
         int y = rand() % MAX_Y;
 
-        //sources[i].x = x;
-        //sources[i].y = y;
-        sources[i].x = 4;
-        sources[i].y = 4;
+        sources[i].x = x;
+        sources[i].y = y;
         sources[i].noise_level = Np;
         sources[i].distance_affected = Dp;
         sources[i].moving_speed = Vp;
@@ -111,10 +109,8 @@ int read_sim_params(noise_source **ptr_sources) {
         // Compute random number between 0 and MAX_Y for coord Y
         int y = rand() % MAX_Y;
 
-        //sources[i].x = x;
-        //sources[i].y = y;
-        sources[i].x = 4;
-        sources[i].y = 4;
+        sources[i].x = x;
+        sources[i].y = y;
         sources[i].noise_level = Nv;
         sources[i].distance_affected = Dv;
         sources[i].moving_speed = Vv;
