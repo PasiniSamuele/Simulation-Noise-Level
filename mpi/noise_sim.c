@@ -363,6 +363,8 @@ int main(int argc, char** argv) {
         // Compute the noise for each square meter in the region (MAX_Y x MAX_X)
         int **noise_sqm = compute_noise_sqm(local_arr, num_elem_per_proc);
 
+
+        // DEBUG -->
         if (my_rank == 0) {
             print_matrix(noise_sqm, MAX_Y, MAX_X);
         }
@@ -371,8 +373,9 @@ int main(int argc, char** argv) {
 
         if (my_rank != 0) {
             print_matrix(noise_sqm, MAX_Y, MAX_X);
-        }
-        
+        }  
+        // <-- DEBUG
+
         int count = 0;
 
         // Shuffle
@@ -406,10 +409,12 @@ int main(int argc, char** argv) {
             }
         }
 
+
+
         // Gather all partial results in process 0
         noise_data *gather_buffer = NULL;
         if (my_rank == 0) {
-            gather_buffer = malloc(sizeof(noise_data) * world_size * noises_per_proc);
+            gather_buffer = malloc(sizeof(noise_data) * MAX_X * MAX_Y);
         }
 
         MPI_Gatherv(my_noises, noise_size, mpi_noise_data, gather_buffer, noises_recv_count, noises_displs, mpi_noise_data, 0, MPI_COMM_WORLD);
