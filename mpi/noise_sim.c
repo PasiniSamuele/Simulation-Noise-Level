@@ -6,6 +6,16 @@
 #include <math.h>
 #include <unistd.h>
 
+#define max(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a > _b ? _a : _b; })
+     
+#define min(a,b) \
+   ({ __typeof__ (a) _a = (a); \
+       __typeof__ (b) _b = (b); \
+     _a < _b ? _a : _b; })
+
 #define P 1
 #define V 1
 #define MAX_Y 5 // W
@@ -81,6 +91,9 @@ void print_array(noise_source *arr, int numel) {
     printf("\n");
 }
 
+void print_my_noise(noise_data *my_noise) {
+    printf("Noise in (%d, %d) = %d dB\n", my_noise->x, my_noise->y, my_noise->noise_level);
+}
 
 int read_sim_params(noise_source **ptr_sources) {
     *ptr_sources = malloc((P+V) * sizeof(noise_source));
@@ -148,51 +161,17 @@ int **compute_noise_sqm(noise_source *sources, int num_elem) {
 
     for (int i = 0; i < num_elem; i++) {
 
-        int x = sources[i].x;
-        int y = sources[i].y;
+        int max_x_increment = sources[i].x - sources[i].distance_affected;
+        int min_x_increment = sources[i].x + sources[i].distance_affected;
+        int max_y_increment = sources[i].y - sources[i].distance_affected;
+        int min_y_increment = sources[i].y + sources[i].distance_affected;
 
-        noise_sqm[y][x] = sum_noises(noise_sqm[y][x], sources[i].noise_level);
-
-        for (int j = 1; j <= sources[i].distance_affected; j++) {
-            if (x+j < MAX_X) {
-                noise_sqm[y][x+j] = sum_noises(noise_sqm[y][x+j], sources[i].noise_level);
-            }
-
-            if (x-j >= 0) {
-                noise_sqm[y][x-j] = sum_noises(noise_sqm[y][x-j], sources[i].noise_level);
-            }
-
-            if (y-j >= 0) {
-                noise_sqm[y-j][x] = sum_noises(noise_sqm[y-j][x], sources[i].noise_level);
-            }
-
-            if (y+j < MAX_Y) {
-                noise_sqm[y+j][x] = sum_noises(noise_sqm[y+j][x], sources[i].noise_level);
-            }  
-        }
-
-
-        for (int j = 1; j <= sources[i].distance_affected; j++) {
-            for (int k = 1; k <= sources[i].distance_affected; k++) {
-                if (x+j < MAX_X && y+k < MAX_Y) {
-                    noise_sqm[y+k][x+j] = sum_noises(noise_sqm[y+k][x+j], sources[i].noise_level);
-                }
-
-                if (x-j >= 0 && y+k < MAX_Y) {
-                    noise_sqm[y+k][x-j] = sum_noises(noise_sqm[y+k][x-j], sources[i].noise_level);
-                }
-
-                if (x+j < MAX_X && y-k >= 0) {
-                    noise_sqm[y-k][x+j] = sum_noises(noise_sqm[y-k][x+j], sources[i].noise_level);
-                }
-
-                if (x-j >= 0 && y-k >= 0) {
-                    noise_sqm[y-k][x-j] = sum_noises(noise_sqm[y-k][x-j], sources[i].noise_level);
-                }     
+        for (int y = max(0, max_y_increment); y <= min(min_y_increment, MAX_Y - 1); y++) {
+            for (int x = max(0, max_x_increment); x <= min(min_x_increment, MAX_X - 1); x++) {
+                noise_sqm[y][x] = sum_noises(noise_sqm[y][x], sources[i].noise_level);
             }
         }
     }
-
     return noise_sqm;
 }
 
@@ -215,7 +194,7 @@ void move_noise_sources(noise_source *sources, int num_elem) {
     }
 }
 
-/* void init_struct_noise_source(MPI_Datatype *mpi_noise_source) {
+void init_struct_noise_source(MPI_Datatype *mpi_noise_source) {
     // Struct noise_source
     int struct_len = 5;
     int block_lens[] = { 1, 1, 1, 1, 1 };
@@ -227,9 +206,13 @@ void move_noise_sources(noise_source *sources, int num_elem) {
         offsetof(noise_source, y)
     };
     MPI_Datatype types[] = { MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT };
+    MPI_Datatype tmp_type;
+    MPI_Aint lb, extent;
 
     // Create and commit the data structure
-    MPI_Type_create_struct(struct_len, block_lens, displacements, types, mpi_noise_source);
+    MPI_Type_create_struct(struct_len, block_lens, displacements, types, &tmp_type);
+    MPI_Type_get_extent(tmp_type, &lb, &extent);
+    MPI_Type_create_resized(tmp_type, lb, extent, mpi_noise_source);
     MPI_Type_commit(mpi_noise_source);
 }
 
@@ -243,15 +226,14 @@ void init_struct_noise_data(MPI_Datatype *mpi_noise_data) {
         offsetof(noise_data, y)
     };
     MPI_Datatype types[] = { MPI_INT, MPI_INT, MPI_INT };
+    MPI_Datatype tmp_type;
+    MPI_Aint lb, extent;
 
     // Create and commit the data structure
-    MPI_Type_create_struct(struct_len, block_lens, displacements, types, mpi_noise_data);
+    MPI_Type_create_struct(struct_len, block_lens, displacements, types, &tmp_type);
+    MPI_Type_get_extent(tmp_type, &lb, &extent);
+    MPI_Type_create_resized(tmp_type, lb, extent, mpi_noise_data);
     MPI_Type_commit(mpi_noise_data);
-} */
-
-
-void print_my_noise(noise_data *my_noise) {
-    printf("Noise in (%d, %d) = %d dB\n", my_noise->x, my_noise->y, my_noise->noise_level);
 }
 
 int main(int argc, char** argv) {
@@ -260,47 +242,11 @@ int main(int argc, char** argv) {
 
     MPI_Init(NULL, NULL);
  
-    MPI_Datatype mpi_noise_data;
     MPI_Datatype mpi_noise_source;
-    /*
-    init_struct_noise_source(&mpi_noise_data);
-    init_struct_noise_data(&mpi_noise_source); */
-
-    // Struct noise_source
-    int struct_len = 5;
-    int block_lens[] = { 1, 1, 1, 1, 1 };
-    MPI_Aint displacements[] = { 
-        offsetof(noise_source, noise_level),
-        offsetof(noise_source, distance_affected),
-        offsetof(noise_source, moving_speed),
-        offsetof(noise_source, x),
-        offsetof(noise_source, y)
-    };
-    MPI_Datatype types[] = { MPI_INT, MPI_INT, MPI_INT, MPI_INT, MPI_INT };
-
-    // Create and commit the data structure
-    MPI_Type_create_struct(struct_len, block_lens, displacements, types, &mpi_noise_source);
-    MPI_Type_commit(&mpi_noise_source);
-
-    // Struct noise_data
-    int struct_len2 = 3;
-    int block_lens2[] = { 1, 1, 1 };
-    MPI_Aint displacements2[] = { 
-        offsetof(noise_data, noise_level),
-        offsetof(noise_data, x),
-        offsetof(noise_data, y)
-    };
-    MPI_Datatype types2[] = { MPI_INT, MPI_INT, MPI_INT };
-
-    // Create and commit the data structure
-    MPI_Type_create_struct(struct_len2, block_lens2, displacements2, types2, &mpi_noise_data);
-    MPI_Type_commit(&mpi_noise_data);
-
-
-
-
-
-
+    MPI_Datatype mpi_noise_data;
+    
+    init_struct_noise_source(&mpi_noise_source);
+    init_struct_noise_data(&mpi_noise_data);
 
     int my_rank, world_size; 
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -395,10 +341,7 @@ int main(int argc, char** argv) {
                     for (int p = 0; p < world_size-1; p++) {
                         int rec_buffer;
                         MPI_Recv(&rec_buffer, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-                        //printf("PRIMA (x, y) = noise_level, rec_buffer: (%d, %d) = %d, %d\n", j, i, my_noises[count].noise_level, rec_buffer);
                         my_noises[count].noise_level = sum_noises(my_noises[count].noise_level, rec_buffer);
-                        //printf("DOPO  (x, y) = noise_level, rec_buffer: (%d, %d) = %d, %d\n", j, i, my_noises[count].noise_level, rec_buffer);
                     }
                     count++;
                 }
@@ -408,8 +351,6 @@ int main(int argc, char** argv) {
                 }
             }
         }
-
-
 
         // Gather all partial results in process 0
         noise_data *gather_buffer = NULL;
