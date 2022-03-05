@@ -5,6 +5,8 @@
 #include <mpi.h>
 #include <math.h>
 #include <unistd.h>
+#include <mosquitto.h>
+#include <string.h>
 
 #define max(a,b) \
    ({ __typeof__ (a) _a = (a); \
@@ -22,11 +24,11 @@
 #define MAX_X 5 // L
 #define Np 40
 #define Nv 45
-#define Dp 1
-#define Dv 2
+#define Dp 3
+#define Dv 5
 #define Vp 1
-#define Vv 1
-#define t 5
+#define Vv 3
+#define t 10
 
 #define DEBUG 1
 
@@ -236,9 +238,148 @@ void init_struct_noise_data(MPI_Datatype *mpi_noise_data) {
     MPI_Type_commit(mpi_noise_data);
 }
 
+
+
+/* Callback called when the client receives a CONNACK message from the broker. */
+void on_connect(struct mosquitto *mosq, void *obj, int reason_code)
+{
+	/* Print out the connection result. mosquitto_connack_string() produces an
+	 * appropriate string for MQTT v3.x clients, the equivalent for MQTT v5.0
+	 * clients is mosquitto_reason_string().
+	 */
+	printf("on_connect: %s\n", mosquitto_connack_string(reason_code));
+	if(reason_code != 0){
+		/* If the connection fails for any reason, we don't want to keep on
+		 * retrying in this example, so disconnect. Without this, the client
+		 * will attempt to reconnect. */
+		mosquitto_disconnect(mosq);
+	}
+
+	/* You may wish to set a flag here to indicate to your application that the
+	 * client is now connected. */
+}
+
+
+/* Callback called when the client knows to the best of its abilities that a
+ * PUBLISH has been successfully sent. For QoS 0 this means the message has
+ * been completely written to the operating system. For QoS 1 this means we
+ * have received a PUBACK from the broker. For QoS 2 this means we have
+ * received a PUBCOMP from the broker. */
+void on_publish(struct mosquitto *mosq, void *obj, int mid)
+{
+	printf("Message with mid %d has been published.\n", mid);
+}
+
+
+int get_temperature(void)
+{
+	sleep(1); /* Prevent a storm of messages - this pretend sensor works at 1Hz */
+	return random()%100;
+}
+
+/* This function pretends to read some data from a sensor and publish it.*/
+void publish_data(struct mosquitto *mosq)
+{
+	char payload[20];
+	int temp;
+	int rc;
+
+	/* Get our pretend data */
+	temp = get_temperature();
+	/* Print it to a string for easy human reading - payload format is highly
+	 * application dependent. */
+	snprintf(payload, sizeof(payload), "%d", temp);
+
+	/* Publish the message
+	 * mosq - our client instance
+	 * *mid = NULL - we don't want to know what the message id for this message is
+	 * topic = "noise/region" - the topic on which this message will be published
+	 * payloadlen = strlen(payload) - the length of our payload in bytes
+	 * payload - the actual payload
+	 * qos = 1 - publish with QoS 1
+	 * retain = false - do not use the retained message feature for this message
+	 */
+    // TODO set region number from file
+	rc = mosquitto_publish(mosq, NULL, "noise/region666", strlen(payload), payload, 1, false);
+	if (rc != MOSQ_ERR_SUCCESS) {
+		fprintf(stderr, "Error publishing: %s\n", mosquitto_strerror(rc));
+	}
+}
+
+int init_mosquitto() {
+    struct mosquitto *mosq;
+	int rc;
+
+	/* Required before calling other mosquitto functions */
+	mosquitto_lib_init();
+
+	/* Create a new client instance.
+	 * id = NULL -> ask the broker to generate a client id for us
+	 * clean session = true -> the broker should remove old sessions when we connect
+	 * obj = NULL -> we aren't passing any of our private data for callbacks
+	 */
+	mosq = mosquitto_new(NULL, true, NULL);
+	if(mosq == NULL){
+		fprintf(stderr, "Error: Out of memory.\n");
+		return 1;
+	}
+
+    // TODO set username and password from config file
+    rc = mosquitto_username_pw_set(mosq, "mqtt_dev", "Pi3r0P4ol069");
+    if(rc != MOSQ_ERR_SUCCESS){
+        fprintf(stderr, "Error: Failed to login.\n");
+        return 1;
+    }
+
+	/* Configure callbacks. This should be done before connecting ideally. */
+	mosquitto_connect_callback_set(mosq, on_connect);
+	mosquitto_publish_callback_set(mosq, on_publish);
+
+	/* Connect to test.mosquitto.org on port 1883, with a keepalive of 60 seconds.
+	 * This call makes the socket connection only, it does not complete the MQTT
+	 * CONNECT/CONNACK flow, you should use mosquitto_loop_start() or
+	 * mosquitto_loop_forever() for processing net traffic. */
+
+    // TODO set IP, PORT and KEEP_ALIVE from config file
+	rc = mosquitto_connect(mosq, "79.30.228.164", 1883, 60);
+	if(rc != MOSQ_ERR_SUCCESS){
+		mosquitto_destroy(mosq);
+		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+
+	/* Run the network loop in a background thread, this call returns quickly. */
+	rc = mosquitto_loop_start(mosq);
+	if(rc != MOSQ_ERR_SUCCESS){
+		mosquitto_destroy(mosq);
+		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
+		return 1;
+	}
+
+	/* At this point the client is connected to the network socket, but may not
+	 * have completed CONNECT/CONNACK.
+	 * It is fairly safe to start queuing messages at this point, but if you
+	 * want to be really sure you should wait until after a successful call to
+	 * the connect callback.
+	 * In this case we know it is 1 second before we start publishing.
+	 */
+}
+
+void shutdown_mosquitto() {
+    mosquitto_lib_cleanup();
+}
+
+
+
 int main(int argc, char** argv) {
     // Init random number generator
     srand(time(NULL));
+
+    // TODO read config file
+
+    // Initialize mosquitto connection
+    // TODO send config file
+    //init_mosquitto();
 
     MPI_Init(NULL, NULL);
  
@@ -311,7 +452,7 @@ int main(int argc, char** argv) {
 
 
         // DEBUG -->
-        if (my_rank == 0) {
+        /* if (my_rank == 0) {
             print_matrix(noise_sqm, MAX_Y, MAX_X);
         }
         
@@ -319,7 +460,7 @@ int main(int argc, char** argv) {
 
         if (my_rank != 0) {
             print_matrix(noise_sqm, MAX_Y, MAX_X);
-        }  
+        }   */
         // <-- DEBUG
 
         int count = 0;
@@ -357,6 +498,8 @@ int main(int argc, char** argv) {
         if (my_rank == 0) {
             gather_buffer = malloc(sizeof(noise_data) * MAX_X * MAX_Y);
         }
+        printf("Oporco ha una casa\n");
+
 
         MPI_Gatherv(my_noises, noise_size, mpi_noise_data, gather_buffer, noises_recv_count, noises_displs, mpi_noise_data, 0, MPI_COMM_WORLD);
 
@@ -368,12 +511,19 @@ int main(int argc, char** argv) {
 
             int **matrix = init_noise_sqm();
 
+            // Build JSON string to send
+
+            printf("A");
+
             for (int i = 0; i <  MAX_X * MAX_Y; i++) {
                 matrix[gather_buffer[i].y][gather_buffer[i].x] = gather_buffer[i].noise_level;
             }
 
-            print_matrix(matrix, MAX_X, MAX_Y);
+            printf("B");
+            //print_matrix(matrix, MAX_X, MAX_Y);
             //print_matrix_file(matrix, MAX_X, MAX_Y);
+
+            //publish_data(mosq);
         }
 
         move_noise_sources(local_arr, num_elem_per_proc);
@@ -399,6 +549,8 @@ int main(int argc, char** argv) {
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
+
+    shutdown_mosquitto();
 
     return 0;
 }
