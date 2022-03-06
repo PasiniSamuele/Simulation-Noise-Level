@@ -34,6 +34,11 @@ int publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq, noise_data *noi
 	char pub_buffer[PUBLISH_BUFFER_SIZE];
 
 	for (int i = 0; i < noises_size; i++) {
+		// Skip the send if the noise_level is 0
+		if (noises[i].noise_level == 0) {
+			continue;
+		}
+
 		len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, 
 							"{\"noise\": %d, \"mode\": \"%s\", \"coordX\": %d, \"coordY\": %d}", 
 							noises[i].noise_level, "avg", noises[i].x,  noises[i].y);
@@ -52,7 +57,7 @@ int publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq, noise_data *noi
 		* qos = 1 - publish with QoS 1
 		* retain = false - do not use the retained message feature for this message
 		*/
-		rc = mosquitto_publish(mosq, NULL, mqtt_conf->topic, strlen(pub_buffer), pub_buffer, 1, false);
+		rc = mosquitto_publish(mosq, NULL, mqtt_conf->topic, len, pub_buffer, 1, false);
 		if (rc != MOSQ_ERR_SUCCESS) {
 			fprintf(stderr, "Error publishing: %s\n", mosquitto_strerror(rc));
 		}
