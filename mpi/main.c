@@ -188,14 +188,8 @@ int main(int argc, char** argv) {
         sleep(sim_conf.t);
     }
 
-
-
-/*
-
-
-
     // TODO FREEEEEEE
-
+    /*
     // Clean up
     if (my_rank == 0) {
         free(global_arr);
