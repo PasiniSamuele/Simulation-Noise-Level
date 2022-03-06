@@ -39,30 +39,28 @@ int main(int argc, char** argv) {
     // Process 0 (root) read the config file and creates the array
     all_config all_conf;
     noise_source *global_arr = NULL;
-
     if (my_rank == 0) {
         // Read configs from file
         read_simulation_config(&all_conf.sim_conf);
         read_mqtt_config(&all_conf.mqtt_conf);
         
+        printf("MY_RANK username: %s\n", all_conf.mqtt_conf.username);
+
         all_conf.num_elem_per_proc = init_sources_array(&all_conf.sim_conf, &global_arr) / world_size;
     }
     MPI_Bcast(&all_conf, 1, mpi_all_conf, 0, MPI_COMM_WORLD);
-
-    printf("AAA");
-    printf("my_rank: %d, all_conf.mqtt_conf.username: %s", my_rank, all_conf.mqtt_conf.username);
-    printf("BBB");
 
     int num_elem_per_proc = all_conf.num_elem_per_proc;
     simulation_config sim_conf = all_conf.sim_conf;
     mqtt_config mqtt_conf = all_conf.mqtt_conf;
 
-    
 
+    printf("my_rank: %d, AAA\n", my_rank);
     // Initialize mosquitto connection
     struct mosquitto *mosq;
     init_mosquitto(&mqtt_conf, mosq);
 
+    printf("my_rank: %d, BBB\n", my_rank);
 
     // Element to be sent for each process
     int elem_send_count[world_size];

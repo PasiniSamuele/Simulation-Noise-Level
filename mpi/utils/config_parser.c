@@ -33,7 +33,6 @@ int read_simulation_config(simulation_config *sim_conf) {
             fprintf(stderr, "Could not read some simulation parameters!\n");
         }
     }
-    config_destroy(&cfg);
     return EXIT_SUCCESS;
 }
 
@@ -67,6 +66,5 @@ int read_mqtt_config(mqtt_config *mqtt_conf) {
         }
     }
     
-    config_destroy(&cfg);
     return EXIT_SUCCESS;
 }
