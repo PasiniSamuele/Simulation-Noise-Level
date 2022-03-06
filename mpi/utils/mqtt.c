@@ -25,40 +25,41 @@ void on_connect(struct mosquitto *mosq, void *obj, int reason_code)
  * been completely written to the operating system. For QoS 1 this means we
  * have received a PUBACK from the broker. For QoS 2 this means we have
  * received a PUBCOMP from the broker. */
-void on_publish(struct mosquitto *mosq, void *obj, int mid)
-{
+void on_publish(struct mosquitto *mosq, void *obj, int mid) {
 	printf("Message with mid %d has been published.\n", mid);
 }
 
-/* This function pretends to read some data from a sensor and publish it.*/
-void publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq)
-{
-	char payload[20];
-	int temp;
-	int rc;
+int publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq, noise_data *noises, int noises_size) {
+	int rc, len;
+	char pub_buffer[PUBLISH_BUFFER_SIZE];
 
-	/* Get our pretend data */
-	temp = 222;
-	/* Print it to a string for easy human reading - payload format is highly
-	 * application dependent. */
-	snprintf(payload, sizeof(payload), "%d", temp);
+	for (int i = 0; i < noises_size; i++) {
+		len = snprintf(pub_buffer, PUBLISH_BUFFER_SIZE, 
+							"{\"noise\": %d, \"mode\": \"%s\", \"coordX\": %d, \"coordY\": %d}", 
+							noises[i].noise_level, "avg", noises[i].x,  noises[i].y);
 
-	/* Publish the message
-	 * mosq - our client instance
-	 * *mid = NULL - we don't want to know what the message id for this message is
-	 * topic = "noise/region" - the topic on which this message will be published
-	 * payloadlen = strlen(payload) - the length of our payload in bytes
-	 * payload - the actual payload
-	 * qos = 1 - publish with QoS 1
-	 * retain = false - do not use the retained message feature for this message
-	 */
-	rc = mosquitto_publish(mosq, NULL, mqtt_conf->topic, strlen(payload), payload, 1, false);
-	if (rc != MOSQ_ERR_SUCCESS) {
-		fprintf(stderr, "Error publishing: %s\n", mosquitto_strerror(rc));
+		if (len < 0 || len >= PUBLISH_BUFFER_SIZE) {
+			fprintf(stderr, "Error: Buffer too short or too long. Have %d, need %d + \\0\n", PUBLISH_BUFFER_SIZE, len);
+			return 1;
+		}
+
+		/* Publish the message
+		* mosq - our client instance
+		* *mid = NULL - we don't want to know what the message id for this message is
+		* topic = "noise/region" - the topic on which this message will be published
+		* payloadlen = strlen(payload) - the length of our payload in bytes
+		* payload - the actual payload
+		* qos = 1 - publish with QoS 1
+		* retain = false - do not use the retained message feature for this message
+		*/
+		rc = mosquitto_publish(mosq, NULL, mqtt_conf->topic, strlen(pub_buffer), pub_buffer, 1, false);
+		if (rc != MOSQ_ERR_SUCCESS) {
+			fprintf(stderr, "Error publishing: %s\n", mosquitto_strerror(rc));
+		}
 	}
 }
 
-int init_mosquitto(mqtt_config *mqtt_conf, struct mosquitto *mosq) {
+int init_mosquitto(mqtt_config *mqtt_conf, struct mosquitto **ptr_mosq) {
 	int rc;
 
 	/* Required before calling other mosquitto functions */
@@ -69,37 +70,37 @@ int init_mosquitto(mqtt_config *mqtt_conf, struct mosquitto *mosq) {
 	 * clean session = true -> the broker should remove old sessions when we connect
 	 * obj = NULL -> we aren't passing any of our private data for callbacks
 	 */
-	mosq = mosquitto_new(NULL, true, NULL);
-	if(mosq == NULL){
+	*ptr_mosq = mosquitto_new(NULL, true, NULL);
+	if(*ptr_mosq == NULL){
 		fprintf(stderr, "Error: Out of memory.\n");
 		return 1;
 	}
 	
-    rc = mosquitto_username_pw_set(mosq, mqtt_conf->username, mqtt_conf->password);
+    rc = mosquitto_username_pw_set(*ptr_mosq, mqtt_conf->username, mqtt_conf->password);
     if(rc != MOSQ_ERR_SUCCESS){
         fprintf(stderr, "Error: Failed to login.\n");
         return 1;
     }
 	
 	/* Configure callbacks. This should be done before connecting ideally. */
-	mosquitto_connect_callback_set(mosq, on_connect);
-	mosquitto_publish_callback_set(mosq, on_publish);
+	mosquitto_connect_callback_set(*ptr_mosq, on_connect);
+	mosquitto_publish_callback_set(*ptr_mosq, on_publish);
 
 	/* Connect to mosquitto server on port 1883, with a keepalive of 60 seconds.
 	 * This call makes the socket connection only, it does not complete the MQTT
 	 * CONNECT/CONNACK flow, you should use mosquitto_loop_start() or
 	 * mosquitto_loop_forever() for processing net traffic. */
-	rc = mosquitto_connect(mosq, mqtt_conf->ip, mqtt_conf->port, mqtt_conf->keep_alive);
+	rc = mosquitto_connect(*ptr_mosq, mqtt_conf->ip, mqtt_conf->port, mqtt_conf->keep_alive);
 	if(rc != MOSQ_ERR_SUCCESS){
-		mosquitto_destroy(mosq);
+		mosquitto_destroy(*ptr_mosq);
 		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
 		return 1;
 	}
 
 	/* Run the network loop in a background thread, this call returns quickly. */
-	rc = mosquitto_loop_start(mosq);
+	rc = mosquitto_loop_start(*ptr_mosq);
 	if(rc != MOSQ_ERR_SUCCESS){
-		mosquitto_destroy(mosq);
+		mosquitto_destroy(*ptr_mosq);
 		fprintf(stderr, "Error: %s\n", mosquitto_strerror(rc));
 		return 1;
 	}

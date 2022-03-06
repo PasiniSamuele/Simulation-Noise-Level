@@ -53,8 +53,8 @@ int main(int argc, char** argv) {
     mqtt_config mqtt_conf = all_conf.mqtt_conf;
 
     // Initialize mosquitto connection
-    struct mosquitto *mosq;
-    init_mosquitto(&mqtt_conf, mosq);
+    struct mosquitto *mosq = NULL;
+    init_mosquitto(&mqtt_conf, &mosq);
 
     // Element to be sent for each process
     int elem_send_count[world_size];
@@ -148,6 +148,15 @@ int main(int argc, char** argv) {
             }
         }
 
+
+        // Each process send the computed noise level
+        publish_data(&mqtt_conf, mosq, my_noises, noise_size);
+
+
+
+
+        // GATHER TO ROOT PROCESS IS LEFT FOR DEBUGGING PURPOSES
+
         // Gather all partial results in process 0
         noise_data *gather_buffer = NULL;
         if (my_rank == 0) {
@@ -156,7 +165,7 @@ int main(int argc, char** argv) {
 
         MPI_Gatherv(my_noises, noise_size, mpi_noise_data, gather_buffer, noises_recv_count, noises_displs, mpi_noise_data, 0, MPI_COMM_WORLD);
 
-        // Print
+        // DEBUG Print
         if (my_rank == 0) {
             /*for (int i = 0; i < noises_per_proc * world_size; i++) {
                 printf("(x, y) = noise_level: (%d, %d) = %d\n", gather_buffer[i].x, gather_buffer[i].y, gather_buffer[i].noise_level);
@@ -172,8 +181,6 @@ int main(int argc, char** argv) {
 
             print_matrix(matrix, sim_conf.MAX_X, sim_conf.MAX_Y);
             //print_matrix_file(matrix, sim_conf.MAX_X, sim_conf.MAX_Y);
-
-            //publish_data(mosq);
         }
 
         move_noise_sources(&sim_conf, local_arr, num_elem_per_proc);

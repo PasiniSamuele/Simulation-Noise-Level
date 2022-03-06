@@ -5,6 +5,9 @@
 #include <mosquitto.h>
 
 #include "config_parser.h"
+#include "noise_sim.h"
+
+#define PUBLISH_BUFFER_SIZE 512
 
 /* Callback called when the client receives a CONNACK message from the broker. */
 void on_connect(struct mosquitto *mosq, void *obj, int reason_code);
@@ -17,9 +20,9 @@ void on_connect(struct mosquitto *mosq, void *obj, int reason_code);
 void on_publish(struct mosquitto *mosq, void *obj, int mid);
 
 /* This function pretends to read some data from a sensor and publish it.*/
-void publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq);
+int publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq, noise_data *noises, int noises_size);
 
-int init_mosquitto(mqtt_config *mqtt_conf, struct mosquitto *mosq);
+int init_mosquitto(mqtt_config *mqtt_conf, struct mosquitto **mosq);
 
 void shutdown_mosquitto();
 
