@@ -37,7 +37,7 @@ void init_struct_sim_conf(MPI_Datatype *mpi_sim_conf) {
 void init_struct_mqtt_conf(MPI_Datatype *mpi_mqtt_conf) {
     // Struct all_config
     int struct_len = 6;
-    int block_lens[] = { 1, 1, 1, 1, 1, 1};
+    int block_lens[] = { SIZE_CONF_STR, 1, 1, SIZE_CONF_STR, SIZE_CONF_STR, SIZE_CONF_STR};
     MPI_Aint displacements[] = { 
         offsetof(mqtt_config, ip),
         offsetof(mqtt_config, port),

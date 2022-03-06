@@ -41,6 +41,8 @@ int read_mqtt_config(mqtt_config *mqtt_conf) {
     config_t cfg;
     config_setting_t *mqtt_setting;
 
+    const char *ip, *username, *password, *topic;
+
     config_init(&cfg);
 
     /* Read the file. If there is an error, report it and exit. */
@@ -56,13 +58,18 @@ int read_mqtt_config(mqtt_config *mqtt_conf) {
     if (mqtt_setting != NULL) {
 
         /* Only read the record if all of the expected fields are present. */
-        if ( !( config_setting_lookup_string(mqtt_setting, "ip", &mqtt_conf->ip)
+        if ( !( config_setting_lookup_string(mqtt_setting, "ip", &ip)
                 && config_setting_lookup_int(mqtt_setting, "port", &mqtt_conf->port)
                 && config_setting_lookup_int(mqtt_setting, "keep_alive", &mqtt_conf->keep_alive)
-                && config_setting_lookup_string(mqtt_setting, "username", &mqtt_conf->username)
-                && config_setting_lookup_string(mqtt_setting, "password", &mqtt_conf->password)
-                && config_setting_lookup_string(mqtt_setting, "topic", &mqtt_conf->topic))) {
+                && config_setting_lookup_string(mqtt_setting, "username", &username)
+                && config_setting_lookup_string(mqtt_setting, "password", &password)
+                && config_setting_lookup_string(mqtt_setting, "topic", &topic))) {
             fprintf(stderr, "Could not read some mqtt parameters!\n");
+        } else {
+            strncpy(mqtt_conf->ip, ip, SIZE_CONF_STR);
+            strncpy(mqtt_conf->username, username, SIZE_CONF_STR);
+            strncpy(mqtt_conf->password, password, SIZE_CONF_STR);
+            strncpy(mqtt_conf->topic, topic, SIZE_CONF_STR);
         }
     }
     

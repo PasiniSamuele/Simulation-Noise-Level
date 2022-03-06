@@ -6,6 +6,7 @@
 #include <string.h>
 
 #define ALL_CFG_PATH "conf/all.cfg"
+#define SIZE_CONF_STR 30
 
 typedef struct simulation_config_t {
     int P;
@@ -22,12 +23,12 @@ typedef struct simulation_config_t {
 } simulation_config;
 
 typedef struct mqtt_config_t {
-    const char *ip;
+    char ip[SIZE_CONF_STR];
     int port;
     int keep_alive;
-    const char *username;
-    const char *password;
-    const char *topic;
+    char username[SIZE_CONF_STR];
+    char password[SIZE_CONF_STR];
+    char topic[SIZE_CONF_STR];
 } mqtt_config;
 
 int read_simulation_config(simulation_config *sim_conf);

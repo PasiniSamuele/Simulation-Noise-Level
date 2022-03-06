@@ -44,8 +44,6 @@ int main(int argc, char** argv) {
         read_simulation_config(&all_conf.sim_conf);
         read_mqtt_config(&all_conf.mqtt_conf);
         
-        printf("MY_RANK username: %s\n", all_conf.mqtt_conf.username);
-
         all_conf.num_elem_per_proc = init_sources_array(&all_conf.sim_conf, &global_arr) / world_size;
     }
     MPI_Bcast(&all_conf, 1, mpi_all_conf, 0, MPI_COMM_WORLD);
@@ -54,13 +52,9 @@ int main(int argc, char** argv) {
     simulation_config sim_conf = all_conf.sim_conf;
     mqtt_config mqtt_conf = all_conf.mqtt_conf;
 
-
-    printf("my_rank: %d, AAA\n", my_rank);
     // Initialize mosquitto connection
     struct mosquitto *mosq;
     init_mosquitto(&mqtt_conf, mosq);
-
-    printf("my_rank: %d, BBB\n", my_rank);
 
     // Element to be sent for each process
     int elem_send_count[world_size];
@@ -172,14 +166,11 @@ int main(int argc, char** argv) {
 
             // Build JSON string to send
 
-            printf("A");
-
             for (int i = 0; i <  sim_conf.MAX_X * sim_conf.MAX_Y; i++) {
                 matrix[gather_buffer[i].y][gather_buffer[i].x] = gather_buffer[i].noise_level;
             }
 
-            printf("B");
-            //print_matrix(matrix, sim_conf.MAX_X, sim_conf.MAX_Y);
+            print_matrix(matrix, sim_conf.MAX_X, sim_conf.MAX_Y);
             //print_matrix_file(matrix, sim_conf.MAX_X, sim_conf.MAX_Y);
 
             //publish_data(mosq);
