@@ -20,7 +20,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 390,
-        "y": 480,
+        "y": 320,
         "wires": [
             [
                 "8301894363428aaf"
@@ -60,137 +60,13 @@
         "wires": []
     },
     {
-        "id": "1df422f294ec3ca1",
-        "type": "http in",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "url": "/schema",
-        "method": "get",
-        "upload": false,
-        "swaggerDoc": "",
-        "x": 410,
-        "y": 320,
-        "wires": [
-            [
-                "d4a33514f03ad2ba"
-            ]
-        ]
-    },
-    {
-        "id": "3eebe55f5705f3eb",
-        "type": "http response",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "statusCode": "",
-        "headers": {},
-        "x": 1170,
-        "y": 320,
-        "wires": []
-    },
-    {
-        "id": "d4a33514f03ad2ba",
-        "type": "file in",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "filename": "/data/schemas/noise_schema",
-        "format": "utf8",
-        "chunk": false,
-        "sendError": false,
-        "encoding": "none",
-        "allProps": false,
-        "x": 650,
-        "y": 320,
-        "wires": [
-            [
-                "268c01a329c39b6c"
-            ]
-        ]
-    },
-    {
-        "id": "4c9c3a7c16e94b6a",
-        "type": "change",
-        "z": "f6f2187d.f17ca8",
-        "name": "Set JSON Schema",
-        "rules": [
-            {
-                "t": "set",
-                "p": "schemaUrl",
-                "pt": "msg",
-                "to": "http://localhost:1880/schema",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 930,
-        "y": 480,
-        "wires": [
-            [
-                "7668411942481fd6"
-            ]
-        ]
-    },
-    {
-        "id": "268c01a329c39b6c",
-        "type": "change",
-        "z": "f6f2187d.f17ca8",
-        "name": "",
-        "rules": [
-            {
-                "t": "set",
-                "p": "headers.content-type",
-                "pt": "msg",
-                "to": "application/json",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 950,
-        "y": 320,
-        "wires": [
-            [
-                "3eebe55f5705f3eb"
-            ]
-        ]
-    },
-    {
-        "id": "7668411942481fd6",
-        "type": "json-multi-schema-validator",
-        "z": "f6f2187d.f17ca8",
-        "name": "JSON Validator",
-        "x": 1140,
-        "y": 480,
-        "wires": [
-            [
-                "e700439570c0bda4"
-            ]
-        ]
-    },
-    {
-        "id": "ee32e84361b6ecbd",
-        "type": "comment",
-        "z": "f6f2187d.f17ca8",
-        "name": "Serving JSON Schema file",
-        "info": "",
-        "x": 450,
-        "y": 260,
-        "wires": []
-    },
-    {
         "id": "f8bf5f409c29f7e4",
         "type": "comment",
         "z": "f6f2187d.f17ca8",
         "name": "Reading, validating and storing measures from MQTT",
         "info": "",
         "x": 540,
-        "y": 420,
+        "y": 260,
         "wires": []
     },
     {
@@ -223,7 +99,7 @@
         "to": "",
         "reg": false,
         "x": 550,
-        "y": 480,
+        "y": 320,
         "wires": [
             [
                 "dfd664982dfb26d5"
@@ -235,36 +111,17 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Check region",
-        "func": "if (msg.topic == null || msg.region == null) {\n    node.error(\"Invalid MQTT Topic\", msg);\n} else {\n    return msg;\n}",
+        "func": "if (msg.topic == null || msg.region == null) {\n    node.error(\"Discarded measure: invalid MQTT Topic\", msg);\n} else {\n    return msg;\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
         "x": 730,
-        "y": 480,
+        "y": 320,
         "wires": [
             [
-                "4c9c3a7c16e94b6a"
-            ]
-        ]
-    },
-    {
-        "id": "e700439570c0bda4",
-        "type": "function",
-        "z": "f6f2187d.f17ca8",
-        "name": "Check JSON schema validation result",
-        "func": "if (msg.error) {\n    node.error(\"Invalid JSON object\", msg);\n} else {\n    return msg;\n}",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 490,
-        "y": 580,
-        "wires": [
-            [
-                "9eaebe999303fd1d"
+                "85ef5fa06e3cb2a6"
             ]
         ]
     },
@@ -284,8 +141,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "57d039c00858e3f2",
         "name": "",
-        "x": 1150,
-        "y": 580,
+        "x": 410,
+        "y": 420,
         "wires": [
             [
                 "b90ca2e46ba74822"
@@ -299,20 +156,10 @@
         "name": "Preparing Distance Query and Saving Properties",
         "rules": [
             {
-                "t": "delete",
-                "p": "error",
-                "pt": "msg"
-            },
-            {
-                "t": "delete",
-                "p": "validUrl",
-                "pt": "msg"
-            },
-            {
                 "t": "set",
                 "p": "noise",
                 "pt": "msg",
-                "to": "(payload.mode = \"avg\" ? [payload.noise] : payload.noise)",
+                "to": "(payload.mode = \"raw\" ? payload.noise : [payload.noise])",
                 "tot": "jsonata"
             },
             {
@@ -349,8 +196,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 860,
-        "y": 580,
+        "x": 1260,
+        "y": 320,
         "wires": [
             [
                 "7ef5e23e96835592"
@@ -388,8 +235,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 460,
-        "y": 680,
+        "x": 640,
+        "y": 420,
         "wires": [
             [
                 "d85f4b25ecee2e0f"
@@ -407,8 +254,8 @@
         "arraySpltType": "len",
         "stream": false,
         "addname": "",
-        "x": 690,
-        "y": 680,
+        "x": 870,
+        "y": 420,
         "wires": [
             [
                 "e47d5bea0a9d9a1b"
@@ -441,8 +288,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 890,
-        "y": 680,
+        "x": 1070,
+        "y": 420,
         "wires": [
             [
                 "51818a8620e27c54"
@@ -455,8 +302,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "57d039c00858e3f2",
         "name": "",
-        "x": 1090,
-        "y": 680,
+        "x": 1270,
+        "y": 420,
         "wires": [
             [
                 "c7dd97140c5de899"
@@ -476,9 +323,28 @@
         "targetType": "jsonata",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1250,
-        "y": 680,
+        "x": 1430,
+        "y": 420,
         "wires": []
+    },
+    {
+        "id": "85ef5fa06e3cb2a6",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Check JSON schema",
+        "func": "var Ajv = global.get(\"ajv\");\nconst ajv = new Ajv();\n\nconst validate = ajv.compile(global.get(\"schema\"))\nconst valid = validate(msg.payload)\n\nif (!valid) {\n    node.error(\"Discarded measure: invalid JSON\", msg);\n} else {\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 940,
+        "y": 320,
+        "wires": [
+            [
+                "9eaebe999303fd1d"
+            ]
+        ]
     },
     {
         "id": "a6dc2e72f2b21fa9",
