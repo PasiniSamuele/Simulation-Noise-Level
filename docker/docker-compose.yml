@@ -32,8 +32,8 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
     configs:
-      - source: mosquitto-conf
-        target: /docker-entrypoint-initdb.d
+      - source: table-dump
+        target: /docker-entrypoint-initdb.d/db-dump.sql
 
   mosquitto:
     image: eclipse-mosquitto
@@ -47,9 +47,9 @@ services:
       - mosquitto-data:/mosquitto
     configs:
       - source: mosquitto-conf
-        target: /mosquitto/config
+        target: /mosquitto/config/mosquitto.conf
       - source: mosquitto-password
-        target: /mosquitto
+        target: /mosquitto/mqtt_passwd
 
 volumes:
   node-data:
@@ -65,4 +65,4 @@ configs:
   mosquitto-conf:
     file: ./mosquitto/mosquitto.conf
   mosquitto-password:
-    file: ./mosquitto/mqtt_passwd.conf
+    file: ./mosquitto/mqtt_passwd
