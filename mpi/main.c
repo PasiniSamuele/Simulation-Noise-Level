@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <signal.h>
 
 #include <math.h>
 #include <string.h>
@@ -9,12 +10,23 @@
 #include "config_parser.h"
 #include "mqtt.h"
 
+#define DEBUG 0
+
+static volatile sig_atomic_t keep_running = 1;
+
+static void sig_handler(int _)
+{
+    (void)_;
+    keep_running = 0;
+}
 
 int main(int argc, char** argv) {
+    // Catch CTRL-C to handle soft shutdown
+    signal(SIGTERM, sig_handler);
+
     // Init random number generator
     srand(time(NULL));
 
-    
     MPI_Init(NULL, NULL);
 
     // Config MPI_Datatypes
@@ -32,6 +44,7 @@ int main(int argc, char** argv) {
     init_struct_noise_source(&mpi_noise_source);
     init_struct_noise_data(&mpi_noise_data);
 
+
     int my_rank, world_size; 
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -39,12 +52,21 @@ int main(int argc, char** argv) {
     // Process 0 (root) read the config file and creates the array
     all_config all_conf;
     noise_source *global_arr = NULL;
+    noise_data *gather_buffer = NULL;
+    int **gather_matrix = NULL;
+
     if (my_rank == 0) {
         // Read configs from file
         read_simulation_config(&all_conf.sim_conf);
         read_mqtt_config(&all_conf.mqtt_conf);
         
         all_conf.num_elem_per_proc = init_sources_array(&all_conf.sim_conf, &global_arr) / world_size;
+
+        if (DEBUG) {
+            // Gather all partial results in process 0
+            gather_buffer = malloc(sizeof(noise_data) * all_conf.sim_conf.MAX_X * all_conf.sim_conf.MAX_Y);
+            init_noise_sqm(&all_conf.sim_conf, &gather_matrix);
+        }
     }
     MPI_Bcast(&all_conf, 1, mpi_all_conf, 0, MPI_COMM_WORLD);
 
@@ -87,36 +109,19 @@ int main(int argc, char** argv) {
         noises_inc += noises_recv_count[i];
     }
 
-    int noise_size = noises_recv_count[my_rank];
+    int noise_size = noises_recv_count[my_rank]; // Number of noises each process manage
     noise_data *my_noises = malloc(sizeof(noise_data) * noise_size);
-
-    /* if(!my_rank) {
-        printf("-- Elem send --\n");
-        print_counts_and_displs(world_size, elem_send_count, elem_displs);
-
-        printf("-- Noise recv --\n");
-        print_counts_and_displs(world_size, noises_recv_count, noises_displs);
-    }*/
 
     // Scatter the random numbers from process 0 to all processes
     MPI_Scatterv(global_arr, elem_send_count, elem_displs, mpi_noise_source, local_arr, elem_size, mpi_noise_source, 0, MPI_COMM_WORLD);
-    
-    while(1) {
+
+    int **noise_sqm = NULL;
+    init_noise_sqm(&sim_conf, &noise_sqm);
+
+    // Cycle every t seconds
+    while(keep_running) {
         // Compute the noise for each square meter in the region (sim_conf.MAX_Y x sim_conf.MAX_X)
-        int **noise_sqm = compute_noise_sqm(&sim_conf, local_arr, num_elem_per_proc);
-
-
-        // DEBUG -->
-        /* if (my_rank == 0) {
-            print_matrix(noise_sqm, sim_conf.MAX_Y, sim_conf.MAX_X);
-        }
-        
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        if (my_rank != 0) {
-            print_matrix(noise_sqm, sim_conf.MAX_Y, sim_conf.MAX_X);
-        }   */
-        // <-- DEBUG
+        compute_noise_sqm(&sim_conf, &noise_sqm, local_arr, num_elem_per_proc);
 
         int count = 0;
 
@@ -153,55 +158,52 @@ int main(int argc, char** argv) {
         publish_data(&mqtt_conf, mosq, my_noises, noise_size);
 
 
-
-
         // GATHER TO ROOT PROCESS IS LEFT FOR DEBUGGING PURPOSES
 
-        // Gather all partial results in process 0
-        noise_data *gather_buffer = NULL;
-        if (my_rank == 0) {
-            gather_buffer = malloc(sizeof(noise_data) * sim_conf.MAX_X * sim_conf.MAX_Y);
-        }
+        if (DEBUG) {
+            
+            MPI_Gatherv(my_noises, noise_size, mpi_noise_data, gather_buffer, noises_recv_count, noises_displs, mpi_noise_data, 0, MPI_COMM_WORLD);
 
-        MPI_Gatherv(my_noises, noise_size, mpi_noise_data, gather_buffer, noises_recv_count, noises_displs, mpi_noise_data, 0, MPI_COMM_WORLD);
+            if (my_rank == 0) {
+                for (int i = 0; i <  sim_conf.MAX_X * sim_conf.MAX_Y; i++) {
+                    gather_matrix[gather_buffer[i].y][gather_buffer[i].x] = gather_buffer[i].noise_level;
+                }
 
-        // DEBUG Print
-        if (my_rank == 0) {
-            /*for (int i = 0; i < noises_per_proc * world_size; i++) {
-                printf("(x, y) = noise_level: (%d, %d) = %d\n", gather_buffer[i].x, gather_buffer[i].y, gather_buffer[i].noise_level);
-            }*/
-
-            int **matrix = init_noise_sqm(&sim_conf);
-
-            // Build JSON string to send
-
-            for (int i = 0; i <  sim_conf.MAX_X * sim_conf.MAX_Y; i++) {
-                matrix[gather_buffer[i].y][gather_buffer[i].x] = gather_buffer[i].noise_level;
+                print_matrix(gather_matrix, sim_conf.MAX_X, sim_conf.MAX_Y);
             }
-
-            print_matrix(matrix, sim_conf.MAX_X, sim_conf.MAX_Y);
-            //print_matrix_file(matrix, sim_conf.MAX_X, sim_conf.MAX_Y);
         }
 
         move_noise_sources(&sim_conf, local_arr, num_elem_per_proc);
 
+        // Zero out matrices and arrays for next cycle
+        reset_matrix(&noise_sqm, sim_conf.MAX_X, sim_conf.MAX_Y);
+
         sleep(sim_conf.t);
     }
+    
+    printf("Graceful shutdown: stopped by signal `SIGTERM`\n");
 
-    // TODO FREEEEEEE
-    /*
     // Clean up
     if (my_rank == 0) {
         free(global_arr);
-        //free(gather_buffer);
+        
+        if (DEBUG) {
+            free_matrix(gather_matrix, sim_conf.MAX_Y);
+            free(gather_buffer);
+        }
     }
-    //free(local_arr);
-    */
+
+    free_matrix(noise_sqm, sim_conf.MAX_Y);
+    free(local_arr);
+    free(my_noises);
+    
 
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
 
     shutdown_mosquitto();
+
+    printf("Bye!\n");
 
     return 0;
 }

@@ -34,8 +34,8 @@ int publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq, noise_data *noi
 	char pub_buffer[PUBLISH_BUFFER_SIZE];
 
 	for (int i = 0; i < noises_size; i++) {
-		// Skip the send if the noise_level is 0
-		if (noises[i].noise_level == 0) {
+		// Skip the send if the noise_level is <= 0
+		if (noises[i].noise_level <= 0) {
 			continue;
 		}
 
