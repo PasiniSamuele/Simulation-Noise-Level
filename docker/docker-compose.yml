@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  node-red:
+    build:
+      context: ./node-red
+      dockerfile: ./Dockerfile
+    ports:
+      - "1880:1880"
+    restart: always
+    depends_on:
+      - db
+      - mosquitto
+    env_file:
+      - common.env
+    networks:
+      - node-net
+    volumes:
+      - node-data:/data
+
+  db:
+    image: mysql
+    ports:
+      - "3306:3306"
+    hostname: db
+    restart: always
+    env_file:
+      - common.env
+      - db.env
+    networks:
+      - node-net
+    volumes:
+      - mysql-data:/var/lib/mysql
+    configs:
+      - source: mosquitto-conf
+        target: /docker-entrypoint-initdb.d
+
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883" 
+    hostname: mqtt
+    restart: always
+    networks:
+      - node-net
+    volumes:
+      - mosquitto-data:/mosquitto
+    configs:
+      - source: mosquitto-conf
+        target: /mosquitto/config
+      - source: mosquitto-password
+        target: /mosquitto
+
+volumes:
+  node-data:
+  mysql-data:
+  mosquitto-data:
+
+networks:
+  node-net:
+
+configs:
+  table-dump:
+    file: ./mysql/db-dump.sql
+  mosquitto-conf:
+    file: ./mosquitto/mosquitto.conf
+  mosquitto-password:
+    file: ./mosquitto/mqtt_passwd.conf
