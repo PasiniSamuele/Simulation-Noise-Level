@@ -1,0 +1,74 @@
+{
+    "schema": {
+        "title": "Noise Measure",
+        "description": "A noise measure sent by a sensor",
+        "type": "object",
+        "properties": {
+            "noise": {
+                "description": "Noise value"
+            },
+            "mode": {
+                "description": "Noise mode",
+                "enum": [
+                    "avg",
+                    "raw"
+                ]
+            },
+            "coordX": {
+                "description": "Coordinate X of sensor",
+                "type": "number"
+            },
+            "coordY": {
+                "description": "Coordinate Y of sensor",
+                "type": "number"
+            }
+        },
+        "allOf": [
+            {
+                "if": {
+                    "properties": {
+                        "mode": {
+                            "const": "avg"
+                        }
+                    }
+                },
+                "then": {
+                    "properties": {
+                        "noise": {
+                            "type": "number",
+                            "minimum": 10,
+                            "maximum": 180
+                        }
+                    }
+                }
+            },
+            {
+                "if": {
+                    "properties": {
+                        "mode": {
+                            "const": "raw"
+                        }
+                    }
+                },
+                "then": {
+                    "properties": {
+                        "noise": {
+                            "type": "array",
+                            "items": {
+                                "type": "number",
+                                "minimum": 10,
+                                "maximum": 180
+                            }
+                        }
+                    }
+                }
+            }
+        ],
+        "required": [
+            "noise",
+            "coordX",
+            "coordY",
+            "mode"
+        ]
+    }
+}
