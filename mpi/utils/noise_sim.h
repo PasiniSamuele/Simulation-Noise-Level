@@ -60,12 +60,16 @@ void print_my_noise(noise_data *my_noise);
 
 int init_sources_array(simulation_config *sim_conf, noise_source **ptr_sources);
 
-int **init_noise_sqm(simulation_config *sim_conf);
-
 int sum_noises(int noise1, int noise2);
 
-int **compute_noise_sqm(simulation_config *sim_conf, noise_source *sources, int num_elem);
+void init_noise_sqm(simulation_config *sim_conf, int ***noise_sqm);
+
+void compute_noise_sqm(simulation_config *sim_conf, int ***noise_sqm, noise_source *sources, int num_elem);
 
 void move_noise_sources(simulation_config *sim_conf, noise_source *sources, int num_elem);
+
+void reset_matrix(int ***mymatrix, int m, int n);
+
+void free_matrix(int **matrix, int size_y);
 
 #endif // NOISE_SIM_H

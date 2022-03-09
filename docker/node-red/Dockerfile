@@ -7,5 +7,4 @@ COPY settings.js /data/settings.js
 COPY flows_cred.json /data/flows_cred.json
 COPY flows.json /data/flows.json
 
-RUN mkdir /data/context/global/
 COPY global.json /data/context/global/global.json

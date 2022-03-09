@@ -206,17 +206,6 @@ int init_sources_array(simulation_config *sim_conf, noise_source **ptr_sources) 
     return sim_conf->V + sim_conf->P; // total number of elements added into sources
 }
 
-int **init_noise_sqm(simulation_config *sim_conf) {
-    int **noise_sqm = calloc(sim_conf->MAX_Y, 1+sizeof(int*)); // alloc one extra ptr to check later for NULL on freeing
-
-    for(int i = 0; i < sim_conf->MAX_Y; i++) {
-        noise_sqm[i] = calloc(sim_conf->MAX_X, sizeof(int));
-    }
-    noise_sqm[sim_conf->MAX_Y] = NULL; // set the extra ptr to NULL
-
-    return noise_sqm;
-}
-
 int sum_noises(int noise1, int noise2) {
     // Two checks to avoid floor and get better approximation
     if (noise1 == 0) {
@@ -230,9 +219,16 @@ int sum_noises(int noise1, int noise2) {
     return round(10 * log10( pow(10, (noise1 / 10.0)) + pow(10, (noise2 / 10.0)) ) );
 }
 
-int **compute_noise_sqm(simulation_config *sim_conf, noise_source *sources, int num_elem) {
-    int **noise_sqm = init_noise_sqm(sim_conf);
+void init_noise_sqm(simulation_config *sim_conf, int ***noise_sqm) {
+    *noise_sqm = calloc(sim_conf->MAX_Y, 1+sizeof(int*)); // alloc one extra ptr to check later for NULL on freeing
 
+    for(int i = 0; i < sim_conf->MAX_Y; i++) {
+        (*noise_sqm)[i] = calloc(sim_conf->MAX_X, sizeof(int));
+    }
+    (*noise_sqm)[sim_conf->MAX_Y] = NULL; // set the extra ptr to NULL
+}
+
+void compute_noise_sqm(simulation_config *sim_conf, int ***noise_sqm, noise_source *sources, int num_elem) {
     for (int i = 0; i < num_elem; i++) {
 
         int max_x_increment = sources[i].x - sources[i].distance_affected;
@@ -242,11 +238,10 @@ int **compute_noise_sqm(simulation_config *sim_conf, noise_source *sources, int 
 
         for (int y = max(0, max_y_increment); y <= min(min_y_increment, sim_conf->MAX_Y - 1); y++) {
             for (int x = max(0, max_x_increment); x <= min(min_x_increment, sim_conf->MAX_X - 1); x++) {
-                noise_sqm[y][x] = sum_noises(noise_sqm[y][x], sources[i].noise_level);
+                (*noise_sqm)[y][x] = sum_noises((*noise_sqm)[y][x], sources[i].noise_level);
             }
         }
     }
-    return noise_sqm;
 }
 
 void move_noise_sources(simulation_config *sim_conf, noise_source *sources, int num_elem) {
@@ -266,4 +261,19 @@ void move_noise_sources(simulation_config *sim_conf, noise_source *sources, int 
         sources[i].x += delta_x;
         sources[i].y += delta_y;
     }
+}
+
+void reset_matrix(int ***mymatrix, int max_x, int max_y) {
+    for (int i = 0; i < max_y; i++) {
+        for (int j = 0; j < max_x; j++) {
+            (*mymatrix)[i][j] = 0;
+        }
+    }
+}
+
+void free_matrix(int **matrix, int size_y) {
+    for (int i = 0; i < size_y; i++) {
+        free(matrix[i]);
+    }
+    free(matrix);
 }
