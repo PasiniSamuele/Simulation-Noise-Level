@@ -12,18 +12,7 @@
 
 #define DEBUG 0
 
-static volatile sig_atomic_t keep_running = 1;
-
-static void sig_handler(int _)
-{
-    (void)_;
-    keep_running = 0;
-}
-
 int main(int argc, char** argv) {
-    // Catch CTRL-C to handle soft shutdown
-    signal(SIGTERM, sig_handler);
-
     // Init random number generator
     srand(time(NULL));
 
@@ -119,7 +108,7 @@ int main(int argc, char** argv) {
     init_noise_sqm(&sim_conf, &noise_sqm);
 
     // Cycle every t seconds
-    while(keep_running) {
+    while(1) {
         // Compute the noise for each square meter in the region (sim_conf.MAX_Y x sim_conf.MAX_X)
         compute_noise_sqm(&sim_conf, &noise_sqm, local_arr, num_elem_per_proc);
 
@@ -181,8 +170,6 @@ int main(int argc, char** argv) {
         sleep(sim_conf.t);
     }
     
-    printf("Graceful shutdown: stopped by signal `SIGTERM`\n");
-
     // Clean up
     if (my_rank == 0) {
         free(global_arr);
@@ -202,8 +189,6 @@ int main(int argc, char** argv) {
     MPI_Finalize();
 
     shutdown_mosquitto();
-
-    printf("Bye!\n");
 
     return 0;
 }
