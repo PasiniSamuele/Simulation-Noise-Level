@@ -141,7 +141,7 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "57d039c00858e3f2",
         "name": "",
-        "x": 410,
+        "x": 1430,
         "y": 420,
         "wires": [
             [
@@ -153,29 +153,8 @@
         "id": "9eaebe999303fd1d",
         "type": "change",
         "z": "f6f2187d.f17ca8",
-        "name": "Preparing Distance Query and Saving Properties",
+        "name": "Preparing Distance Query",
         "rules": [
-            {
-                "t": "set",
-                "p": "noise",
-                "pt": "msg",
-                "to": "(payload.mode = \"raw\" ? payload.noise : [payload.noise])",
-                "tot": "jsonata"
-            },
-            {
-                "t": "set",
-                "p": "coordY",
-                "pt": "msg",
-                "to": "payload.coordY",
-                "tot": "msg"
-            },
-            {
-                "t": "set",
-                "p": "coordX",
-                "pt": "msg",
-                "to": "payload.coordX",
-                "tot": "msg"
-            },
             {
                 "t": "set",
                 "p": "payload",
@@ -196,8 +175,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 1260,
-        "y": 320,
+        "x": 1210,
+        "y": 420,
         "wires": [
             [
                 "7ef5e23e96835592"
@@ -235,8 +214,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 640,
-        "y": 420,
+        "x": 460,
+        "y": 520,
         "wires": [
             [
                 "d85f4b25ecee2e0f"
@@ -254,8 +233,8 @@
         "arraySpltType": "len",
         "stream": false,
         "addname": "",
-        "x": 870,
-        "y": 420,
+        "x": 690,
+        "y": 520,
         "wires": [
             [
                 "e47d5bea0a9d9a1b"
@@ -272,7 +251,7 @@
                 "t": "set",
                 "p": "payload",
                 "pt": "msg",
-                "to": "[payload, coordX, coordY, region, nearestPoint]",
+                "to": "[payload, region, coordX, coordY, nearestPoint]",
                 "tot": "jsonata"
             },
             {
@@ -288,8 +267,8 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 1070,
-        "y": 420,
+        "x": 890,
+        "y": 520,
         "wires": [
             [
                 "51818a8620e27c54"
@@ -302,8 +281,8 @@
         "z": "f6f2187d.f17ca8",
         "mydb": "57d039c00858e3f2",
         "name": "",
-        "x": 1270,
-        "y": 420,
+        "x": 1090,
+        "y": 520,
         "wires": [
             [
                 "c7dd97140c5de899"
@@ -323,8 +302,8 @@
         "targetType": "jsonata",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1430,
-        "y": 420,
+        "x": 1250,
+        "y": 520,
         "wires": []
     },
     {
@@ -340,6 +319,114 @@
         "libs": [],
         "x": 940,
         "y": 320,
+        "wires": [
+            [
+                "b12c68311921557e"
+            ]
+        ]
+    },
+    {
+        "id": "b12c68311921557e",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Setting message properties",
+        "rules": [
+            {
+                "t": "set",
+                "p": "noise",
+                "pt": "msg",
+                "to": "(payload.mode = \"raw\" ? payload.noise : [payload.noise])",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "coordY",
+                "pt": "msg",
+                "to": "payload.coordY",
+                "tot": "msg"
+            },
+            {
+                "t": "set",
+                "p": "coordX",
+                "pt": "msg",
+                "to": "payload.coordX",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1200,
+        "y": 320,
+        "wires": [
+            [
+                "776859adb61dc7ba"
+            ]
+        ]
+    },
+    {
+        "id": "776859adb61dc7ba",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Preparing region boundaries query",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[region, coordX, coordY]",
+                "tot": "jsonata"
+            },
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "SELECT * FROM region WHERE id = ? AND ? BETWEEN min_x AND max_x AND ? BETWEEN min_y AND max_y;",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 480,
+        "y": 420,
+        "wires": [
+            [
+                "2879b7696be6799d"
+            ]
+        ]
+    },
+    {
+        "id": "2879b7696be6799d",
+        "type": "mysql",
+        "z": "f6f2187d.f17ca8",
+        "mydb": "57d039c00858e3f2",
+        "name": "",
+        "x": 730,
+        "y": 420,
+        "wires": [
+            [
+                "0979c75be55a0945"
+            ]
+        ]
+    },
+    {
+        "id": "0979c75be55a0945",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Check region boundaries ",
+        "func": "if (msg.payload.length == 0) {\n    node.error(\"Discarded measure: invalid region boundaries\", msg);\n} else {\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 420,
         "wires": [
             [
                 "9eaebe999303fd1d"
