@@ -34,6 +34,6 @@
 extern double X;
 extern double Y;
 extern double Z;
-extern int REGION;
+extern int regionId;
 
 #endif /* POSITION_INTF_H_ */
