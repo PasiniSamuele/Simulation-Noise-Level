@@ -50,7 +50,7 @@ import org.contikios.cooja.*;
  */
 @ClassDescription("Position")
 public class Position extends MoteInterface {
-  private static java.util.logging.Logger logger = Logger.getLogger(Position.class);
+  private static Logger logger = Logger.getLogger(Position.class);
   private Mote mote = null;
   private double[] coords = new double[3];
   /**
