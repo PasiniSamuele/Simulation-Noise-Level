@@ -9,10 +9,10 @@ UTILS=utils/noise_sim.c utils/mqtt.c utils/config_parser.c
 NPROC=2
 
 all: main.c $(UTILS)
-	$(CC) -o main main.c $(CFLAGS) $(UTILS) $(LIBS)
+	$(CC) -o main ./main.c $(CFLAGS) $(UTILS) $(LIBS)
 
 run: all
-	mpirun -np $(NPROC) main
+	mpirun -np $(NPROC) ./main
 
 .PHONY: clean
 

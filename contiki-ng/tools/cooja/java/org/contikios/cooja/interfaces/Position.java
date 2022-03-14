@@ -88,20 +88,25 @@ public class Position extends MoteInterface {
     // Update position into mote memory
     if (mote != null && mote.getType() instanceof ContikiMoteType) {
       VarMemory memory = new VarMemory(mote.getMemory());
-      int region = Integer.parseInt(
-        mote.getSimulation()
-                .getTitle()
-                .toLowerCase()
-                .replaceAll("region","")
-                .trim()
-      );
+
+      int regionId = getRegionId(mote.getSimulation().getTitle());
 
       memory.setIntValueOf("coordX", (int) (coords[0] * 100));
       memory.setIntValueOf("coordY", (int) (coords[1] * 100));
       memory.setIntValueOf("coordZ", (int) (coords[2] * 100));
-      memory.setIntValueOf("REGION", (int) (region));
+      memory.setIntValueOf("regionId", regionId);
       memory.setByteValueOf("positionChanged", (byte) 1);
     }
+  }
+
+  private int getRegionId(String simTitle) {
+    int regionId = 99; // Set a default value
+    try {
+      regionId = Integer.parseInt(simTitle.replaceAll("[^0-9]", ""));
+    } catch(NumberFormatException e) {
+      logger.info("No region number specified in the title. Setting " + regionId + " as default region ID.");
+    }
+    return regionId;
   }
 
   /**

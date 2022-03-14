@@ -41,7 +41,7 @@ char positionChanged;
 int coordX;
 int coordY;
 int coordZ;
-int REGION;
+int regionId;
 
 double X;
 double Y;
