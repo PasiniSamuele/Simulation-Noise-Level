@@ -26,13 +26,14 @@ void on_connect(struct mosquitto *mosq, void *obj, int reason_code)
  * have received a PUBACK from the broker. For QoS 2 this means we have
  * received a PUBCOMP from the broker. */
 void on_publish(struct mosquitto *mosq, void *obj, int mid) {
-	printf("Message with mid %d has been published.\n", mid);
+	//printf("Message with mid %d has been published.\n", mid);
 }
 
 int publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq, noise_data *noises, int noises_size) {
 	int rc, len;
 	char pub_buffer[PUBLISH_BUFFER_SIZE];
 
+	int pub_count = 0;
 	for (int i = 0; i < noises_size; i++) {
 		// Skip the send if the noise_level is <= 0
 		if (noises[i].noise_level <= 0) {
@@ -61,7 +62,10 @@ int publish_data(mqtt_config *mqtt_conf, struct mosquitto *mosq, noise_data *noi
 		if (rc != MOSQ_ERR_SUCCESS) {
 			fprintf(stderr, "Error publishing: %s\n", mosquitto_strerror(rc));
 		}
+		pub_count++;
 	}
+
+	printf("Published %d messages!\n", pub_count);
 }
 
 int init_mosquitto(mqtt_config *mqtt_conf, struct mosquitto **ptr_mosq) {
