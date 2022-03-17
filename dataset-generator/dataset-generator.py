@@ -1,9 +1,9 @@
 import csv
 import numpy as np
 
-starting_x = 50
-starting_y = 50
-starting_noise = 65
+starting_x = 83
+starting_y = 23
+starting_noise = 33
 
 min_x = 10
 min_y = 10
@@ -26,7 +26,7 @@ actual_y = starting_y
 actual_noise = starting_noise
 
 with open('dataset.csv', 'w', encoding='UTF8', newline='') as f:
-  writer = csv.writer(f, dialect='unix')
+  writer = csv.writer(f, delimiter=',', quoting=csv.QUOTE_NONE, lineterminator='\n')
   for i in range(n_samples):
     delta_x = np.random.uniform(-max_delta_x/2, max_delta_x/2)
     delta_y = np.random.uniform(-max_delta_y/2, max_delta_y/2)
