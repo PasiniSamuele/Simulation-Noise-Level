@@ -26,7 +26,7 @@ actual_y = starting_y
 actual_noise = starting_noise
 
 with open('dataset.csv', 'w', encoding='UTF8', newline='') as f:
-  writer = csv.writer(f)
+  writer = csv.writer(f, dialect='unix')
   for i in range(n_samples):
     delta_x = np.random.uniform(-max_delta_x/2, max_delta_x/2)
     delta_y = np.random.uniform(-max_delta_y/2, max_delta_y/2)
