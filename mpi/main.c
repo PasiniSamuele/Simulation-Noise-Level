@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     noise_source *global_arr = NULL;
     noise_data *gather_buffer = NULL;
     int **gather_matrix = NULL;
-
+     
     if (my_rank == 0) {
         // Read configs from file
         read_simulation_config(&all_conf.sim_conf);
@@ -57,8 +57,10 @@ int main(int argc, char** argv) {
             init_noise_sqm(&all_conf.sim_conf, &gather_matrix);
         }
     }
+
     MPI_Bcast(&all_conf, 1, mpi_all_conf, 0, MPI_COMM_WORLD);
 
+    
     int num_elem_per_proc = all_conf.num_elem_per_proc;
     simulation_config sim_conf = all_conf.sim_conf;
     mqtt_config mqtt_conf = all_conf.mqtt_conf;
@@ -80,7 +82,7 @@ int main(int argc, char** argv) {
         elem_send_count[i] = (i + 1 <= elem_res) ? num_elem_per_proc + 1 : num_elem_per_proc;
         elem_inc += elem_send_count[i];
     }
-
+    
     // For each process, create a receive buffer
     int elem_size = elem_send_count[my_rank];
     noise_source *local_arr = malloc(sizeof(noise_source) * elem_size);
@@ -91,7 +93,7 @@ int main(int argc, char** argv) {
 
     int noises_res = (sim_conf.MAX_X * sim_conf.MAX_Y) % world_size;
     int noises_inc = 0;
-
+    
     for (int i = 0; i < world_size; i++) {
         noises_displs[i] = noises_inc;
         noises_recv_count[i] = (i + 1 <= noises_res) ? noises_per_proc + 1 : noises_per_proc;
@@ -106,7 +108,7 @@ int main(int argc, char** argv) {
 
     int **noise_sqm = NULL;
     init_noise_sqm(&sim_conf, &noise_sqm);
-
+    
     // Cycle every t seconds
     while(1) {
         // Compute the noise for each square meter in the region (sim_conf.MAX_Y x sim_conf.MAX_X)
@@ -170,25 +172,31 @@ int main(int argc, char** argv) {
         sleep(sim_conf.t);
     }
     
+    shutdown_mosquitto();
+
     // Clean up
     if (my_rank == 0) {
         free(global_arr);
         
         if (DEBUG) {
-            free_matrix(gather_matrix, sim_conf.MAX_Y);
+            free_matrix(&gather_matrix, sim_conf.MAX_Y);
             free(gather_buffer);
         }
     }
 
-    free_matrix(noise_sqm, sim_conf.MAX_Y);
+    free_matrix(&noise_sqm, sim_conf.MAX_Y);
     free(local_arr);
-    free(my_noises);
+    free(my_noises);   
     
-
+    MPI_Type_free(&mpi_all_conf);
+    MPI_Type_free(&mpi_sim_conf);
+    MPI_Type_free(&mpi_mqtt_conf);
+    
+    MPI_Type_free(&mpi_noise_source);
+    MPI_Type_free(&mpi_noise_data);
+    
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Finalize();
-
-    shutdown_mosquitto();
 
     return 0;
 }

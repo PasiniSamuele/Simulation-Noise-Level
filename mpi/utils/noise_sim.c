@@ -60,7 +60,7 @@ void init_struct_mqtt_conf(MPI_Datatype *mpi_mqtt_conf) {
 void init_struct_all_conf(MPI_Datatype *mpi_all_conf, MPI_Datatype *mpi_sim_conf, MPI_Datatype *mpi_mqtt_conf) {
     // Struct all_conf
     int struct_len = 3;
-    int block_lens[] = { 11, 6, 1 };
+    int block_lens[] = { 1, 1, 1 };
     MPI_Aint displacements[] = { 
         offsetof(all_config, sim_conf),
         offsetof(all_config, mqtt_conf),
@@ -271,9 +271,9 @@ void reset_matrix(int ***mymatrix, int max_x, int max_y) {
     }
 }
 
-void free_matrix(int **matrix, int size_y) {
+void free_matrix(int ***matrix, int size_y) {
     for (int i = 0; i < size_y; i++) {
-        free(matrix[i]);
+        free((*matrix)[i]);
     }
-    free(matrix);
+    free( (*matrix) );
 }

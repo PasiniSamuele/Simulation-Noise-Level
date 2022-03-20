@@ -70,6 +70,6 @@ void move_noise_sources(simulation_config *sim_conf, noise_source *sources, int 
 
 void reset_matrix(int ***mymatrix, int m, int n);
 
-void free_matrix(int **matrix, int size_y);
+void free_matrix(int ***matrix, int size_y);
 
 #endif // NOISE_SIM_H
